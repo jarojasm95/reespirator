@@ -50,7 +50,7 @@ int porcentajeInspiratorio = 60;
 #define pasosPorRevolucion 200 //Suponiendo un motor de 200 pasos/rev sin microstepper
 int velocidadUno=0;       //se calcula el valor de inicio en el setup
 int velocidadDos=0;       //idem
-int acceleracion=60;      //idem
+int acceleracion=6000;      //6000 para que no se note en el tiempo de ciclo 
 float tCiclo, tIns, tEsp;
 
 
@@ -83,7 +83,7 @@ void setup() {
   enableMotor();
 
   tCiclo=60/rpm; //Tiempo de ciclo en segundos
-  tIns=tCiclo*porcentajeInspiratorio;
+  tIns=tCiclo*(porcentajeInspiratorio/100);
   tEsp=tCiclo-tCiclo
   
   velocidadUno=(pasosPorRevolucion/2)/tIns
