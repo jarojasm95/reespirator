@@ -44,12 +44,14 @@ float vol = 0.5;
 //Variable para el menu
 int posMenu = 0;
 bool editandoMenu = false;
+int porcentajeInspiratorio;
 
 //Constantes motor
 #define pasosPorRevolucion 200 //Suponiendo un motor de 200 pasos/rev sin microstepper
-int velocidadUno=75;       //es un ejemplo
-int velocidadDos=150;      //es un ejemplo
-int acceleracion=60;       //es un ejemplo
+int velocidadUno=0;       //se calcula el valor de inicio en el setup
+int velocidadDos=0;       //idem
+int acceleracion=60;      //idem
+float tCiclo, tIns, tEsp;
 
 
 //mis pines son diferentes por ahora!!
@@ -80,7 +82,13 @@ void setup() {
   stepper.setAcceleration(acceleracion);
   enableMotor();
 
+  tCiclo=60/rpm; //Tiempo de ciclo en segundos
+  tIns=tCiclo*porcentajeInspiratorio;
+  tEsp=tCiclo-tCiclo
   
+  velocidadUno=(pasosPorRevolucion/2)/tIns
+  
+  velocidadUno=(pasosPorRevolucion/2)/tEsp
   
 }
 
