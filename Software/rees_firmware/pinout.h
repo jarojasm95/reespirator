@@ -1,12 +1,12 @@
 #ifndef PINOUT_H
 #define PINOUT_H
 
-
+#include "Arduino.h"
 
 #ifdef I2C  //i2c
 
 //Dirección de LCD I2C
-#define DIR 0x3F
+#define I2C_DIR 0x3F
 
 #else
 

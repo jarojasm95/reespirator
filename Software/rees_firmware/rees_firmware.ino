@@ -1,36 +1,47 @@
-/*
- * UPDATE 18/03/2020 1:39
- * Librerías guardadas en local, no necesaria su descarga
- */
 
-
-#ifdef I2C
-  #include "pantalla_i2c.h"  
-#else
-  #include "pantalla_parallel.h"
-#endif
   
 #include "pinout.h"
+#include "pantalla.h"
+#include "Encoder.h"
 #include "defaults.h"
-
 
 #include "AccelStepper.h"
 
+//Variables globales para la pantalla -> globals.h
+
+int rpm = DEFAULT_RPM;
+float vol = DEFAULT_VOL;
+int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
 
 
-//Constantes motor
-#define pasosPorRevolucion 200 //Suponiendo un motor de 200 pasos/rev sin microstepper
+
+
 float velocidadUno=0;       //se calcula el valor de inicio en el setup
 float velocidadDos=0;       //idem
-int acceleracion=6000;      //6000 para que no se note en el tiempo de ciclo 
+int acceleracion=DEFAULT_ACCELERACION;      
 float tCiclo, tIns, tEsp;
 
 
-//mis pines son diferentes por ahora!!
+//pines en pinout.h
 AccelStepper stepper(AccelStepper::DRIVER, DIRpin, PULpin); //direction Digital 6 (CW), pulses Digital 7 (CLK)
 
 boolean modo = true, errorFC = false;
 
+//encoder
+Encoder encoder1(DTpin, CLKpin, SWpin);
+
+//pantalla
+Pantalla pantalla1=Pantalla();
+
+void enableMotor ()
+{
+  digitalWrite(ENpin, HIGH);
+}
+
+void disableMotor ()
+{
+  digitalWrite(ENpin, LOW);
+}
 
 
 void setup() {
@@ -38,8 +49,7 @@ void setup() {
   Serial.begin (9600);
   Serial.println ("Inicio");
   //Parte pantalla
-  inicializarPantalla();
-  escribirPantalla(rpm, vol, posMenu, 0);
+  pantalla1.begin();
   Serial.println ("PANTALLA ESCRITA");
   
   //Parte motor
@@ -74,7 +84,7 @@ void setup() {
 
 void loop() {
 //Parte menu
-  actualizarMenu();
+  pantalla1.update(encoder1.leerEncoder());
 
 //Parte stepper
    stepper.run();

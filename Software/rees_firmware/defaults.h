@@ -1,17 +1,19 @@
 #ifndef DEFAULTS_H
 #define DEFAULTS_H
 
-#include "Arduino.h"
 
 
 #undef I2C // definido = pantalla i2c, sin definir pantalla parallel
 
 
-//Variables a controlar
-int rpm = 15;
-float vol = 0.5;
-int porcentajeInspiratorio = 60;
+//Valores motor
+#define pasosPorRevolucion 200 //Suponiendo un motor de 200 pasos/rev sin microstepper
+#define DEFAULT_ACCELERACION 6000
+//Valores por defecto
 
+#define DEFAULT_RPM 15
+#define DEFAULT_VOL 0.5
+#define DEFAULT_POR_INSPIRATORIO 60
 
 
 #endif // DEFAULTS_H
