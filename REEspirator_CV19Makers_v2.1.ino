@@ -131,13 +131,13 @@ void loop() {
 
      else if (!stepper.isRunning() && errorFC) //si hay un error pero ha echo los 100 pasos extra en busca del Final de Carrera
       {
-        if (digitalRead(ENDSTOPpin)) //no se ha llegado al final
+        if (digitalRead(ENDSTOPpin)) //no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC 
           {
             errorFC=true;
-            stepper.move(50);
+            stepper.move(3); 
             digitalWrite(BUZZpin, true);
           }
-         else 
+         else                           // cuando lo ha localizado ordena seguir con velocidad 2
           {
             errorFC =false;
             digitalWrite(BUZZpin, false);
