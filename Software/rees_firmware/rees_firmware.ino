@@ -32,8 +32,8 @@ void setup() {
   Serial.begin (9600);
   Serial.println ("Inicio");
   //Parte pantalla
-  //inicializarPantalla();
-  //escribirPantalla(rpm, vol, posMenu, 0);
+  inicializarPantalla();
+  escribirPantalla(rpm, vol, posMenu, 0);
   Serial.println ("PANTALLA ESCRITA");
   
   //Parte motor
