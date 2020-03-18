@@ -27,7 +27,7 @@ float tCiclo, tIns, tEsp;
 
 
 //mis pines son diferentes por ahora!!
-AccelStepper stepper(1, DIRpin, PULpin); //direction Digital 6 (CW), pulses Digital 7 (CLK)
+AccelStepper stepper(AccelStepper::DRIVER, DIRpin, PULpin); //direction Digital 6 (CW), pulses Digital 7 (CLK)
 
 boolean modo = true, errorFC = false;
 
@@ -38,8 +38,8 @@ void setup() {
   Serial.begin (9600);
   Serial.println ("Inicio");
   //Parte pantalla
-  //inicializarPantalla();
-  //escribirPantalla(rpm, vol, posMenu, 0);
+  inicializarPantalla();
+  escribirPantalla(rpm, vol, posMenu, 0);
   Serial.println ("PANTALLA ESCRITA");
   
   //Parte motor

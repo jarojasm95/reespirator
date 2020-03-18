@@ -4,7 +4,7 @@
 #include "Arduino.h"
 
 
-// #define I2C
+#undef I2C // definido = pantalla i2c, sin definir pantalla parallel
 
 
 //Variables a controlar
