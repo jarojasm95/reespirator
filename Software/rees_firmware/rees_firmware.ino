@@ -3,7 +3,13 @@
  * Librerías guardadas en local, no necesaria su descarga
  */
 
-#include "pantalla_parallel.h" // pantalla_parallel.h o cambiar a pantalla_i2c.h
+
+#ifdef I2C
+  #include "pantalla_i2c.h"  
+#else
+  #include "pantalla_parallel.h"
+#endif
+  
 #include "pinout.h"
 #include "defaults.h"
 
@@ -32,8 +38,8 @@ void setup() {
   Serial.begin (9600);
   Serial.println ("Inicio");
   //Parte pantalla
-  inicializarPantalla();
-  escribirPantalla(rpm, vol, posMenu, 0);
+  //inicializarPantalla();
+  //escribirPantalla(rpm, vol, posMenu, 0);
   Serial.println ("PANTALLA ESCRITA");
   
   //Parte motor

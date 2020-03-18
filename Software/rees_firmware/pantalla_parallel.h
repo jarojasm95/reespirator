@@ -9,7 +9,8 @@
 #include "defaults.h"
 
 
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+LiquidCrystal lcd(LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
+
 
  //Variable donde almacenamos el return de leerEncoder
 byte tecla = 0;
