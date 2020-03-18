@@ -44,7 +44,7 @@ float vol = 0.5;
 //Variable para el menu
 int posMenu = 0;
 bool editandoMenu = false;
-int porcentajeInspiratorio;
+int porcentajeInspiratorio = 60;
 
 //Constantes motor
 #define pasosPorRevolucion 200 //Suponiendo un motor de 200 pasos/rev sin microstepper
