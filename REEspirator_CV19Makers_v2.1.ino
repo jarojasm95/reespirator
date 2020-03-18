@@ -46,9 +46,10 @@ int posMenu = 0;
 bool editandoMenu = false;
 
 //Constantes motor
-#define pasosPorRevolucion 3200 //Suponiendo un motor de 200 pasos/rev con un microsteper de 16
-#define velocidadUno 1200
-#define velocidadDos 2400
+#define pasosPorRevolucion 200 //Suponiendo un motor de 200 pasos/rev sin microstepper
+#define velocidadUno 75       //es un ejemplo
+#define velocidadDos 150      //es un ejemplo
+#define acceleracion 60       //es un ejemplo
 
 
 //mis pines son diferentes por ahora!!
@@ -76,7 +77,7 @@ void setup() {
   delay(100);
   digitalWrite(BUZZpin, LOW);
   Serial.println("Setup");
-  stepper.setAcceleration(10000);
+  stepper.setAcceleration(acceleracion);
   enableMotor();
 
   
