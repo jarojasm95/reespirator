@@ -49,16 +49,13 @@ void setup() {
   stepper.setAcceleration(acceleracion);
   enableMotor();
 
-//  tCiclo=60/rpm; //Tiempo de ciclo en segundos
-//  tIns=tCiclo*(porcentajeInspiratorio/100);
-//  tEsp=tCiclo-tCiclo
-//  
-//  velocidadUno=(pasosPorRevolucion/2)/tIns
-//  
-//  
-// velocidadDos=(pasosPorRevolucion/2)/tEsp;
-
+  tCiclo=60/rpm; //Tiempo de ciclo en segundos
+  tIns=(tCiclo*porcentajeInspiratorio)/100;
+  tEsp=tCiclo-tIns;
   
+  velocidadUno=(pasosPorRevolucion/2)/tIns;
+  
+  velocidadDos=(pasosPorRevolucion/2)/tEsp;
 
   Serial.println (tCiclo);
   Serial.println (tIns);
@@ -94,6 +91,7 @@ void loop() {
         Serial.println("Modo 1");
         stepper.setMaxSpeed(velocidadUno);
         Serial.println (velocidadUno);
+        Serial.println (pasosPorRevolucion/2);
         stepper.move(pasosPorRevolucion/2);
         }
       else                                //velociadad 2
@@ -103,13 +101,15 @@ void loop() {
         if (digitalRead(ENDSTOPpin) )//no se ha llegado al final
           {
             errorFC=true;
-            stepper.move(100);
+             Serial.println ("ZUMBA");
+            stepper.move(1);
             digitalWrite(BUZZpin, true);
           }
 
        else 
           {      
-          Serial.println (velocidadDos);    
+          Serial.println (velocidadDos);  
+           Serial.println (pasosPorRevolucion/2);  
           stepper.setMaxSpeed(velocidadDos);
           stepper.move(pasosPorRevolucion/2);  
           }      
@@ -123,8 +123,9 @@ void loop() {
         if (digitalRead(ENDSTOPpin)) //no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC 
           {
             errorFC=true;
-            stepper.move(3); 
+            stepper.move(1); 
             digitalWrite(BUZZpin, true);
+            Serial.println ("ZUMBA");
           }
          else                           // cuando lo ha localizado ordena seguir con velocidad 2
           {
