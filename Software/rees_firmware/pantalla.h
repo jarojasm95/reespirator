@@ -1,4 +1,31 @@
+#ifndef PANTALLA_H
+#define PANTALLA_H
+
+#include "LiquidCrystal_I2C.h"
+#include "pinout.h"
+#include "Arduino.h"
+#include "pantalla.cpp"
+#include "Encoder.h"
+#include "defaults.h"
+
+
+LiquidCrystal_I2C lcd(DIR, 16, 2);
+
+ //Variable donde almacenamos el return de leerEncoder
+byte tecla = 0;
+
+//Crea el objeto Encoder Rotativo
+Encoder encoder1(DTpin, CLKpin, SWpin);
+
+//Variable para el menu
+int posMenu = 0;
+bool editandoMenu = false;
+int porcentajeInspiratorio = 60;
+
 void inicializarPantalla() {
+  //Crear el objeto lcd
+  
+
   //Byte para crear el icono flecha
   byte Flecha[] = {
     B00000,
@@ -48,6 +75,7 @@ void escribirPantalla(int rpm, float vol, int posMenu, int caracter) {
 }
 
 void actualizarMenu() {
+  int tecla;
   tecla = encoder1.leerEncoder();
   switch (tecla) {
     case 2: //Giramos horario (Bajamos en el menu)
@@ -103,3 +131,5 @@ void disableMotor ()
 {
   digitalWrite(ENpin, LOW);
 }
+
+#endif // PANTALLA_H

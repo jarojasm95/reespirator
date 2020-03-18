@@ -3,48 +3,24 @@
  * Librerías guardadas en local, no necesaria su descarga
  */
 
+#include "pantalla.h"
+#include "pinout.h"
+#include "defaults.h"
 
-#include "Encoder.h"
-#include "LiquidCrystal_I2C.h"
+
 #include "AccelStepper.h"
 
-//Dirección de LCD I2C
-#define DIR 0x3F
-
-//Rotary encoder
-#define CLKpin 2
-#define DTpin 3
-#define SWpin  9
-
-//Stepper driver
-#define PULpin 6
-#define DIRpin 7
-#define ENpin 8
-
-//Buzzer
-#define BUZZpin 11
-
-//Sensor hall
-#define ENDSTOPpin 5
-
-//Crer el objeto lcd
-LiquidCrystal_I2C lcd(DIR, 16, 2);
 
 
-//Crea el objeto Encoder Rotativo
-Encoder encoder1(DTpin, CLKpin, SWpin);
 
- //Variable donde almacenamos el return de leerEncoder
-byte tecla = 0;
 
-//Variables a controlar
-byte rpm = 15;
-float vol = 0.5;
 
-//Variable para el menu
-int posMenu = 0;
-bool editandoMenu = false;
-int porcentajeInspiratorio = 60;
+
+
+
+
+
+
 
 //Constantes motor
 #define pasosPorRevolucion 200 //Suponiendo un motor de 200 pasos/rev sin microstepper
@@ -82,13 +58,13 @@ void setup() {
   stepper.setAcceleration(acceleracion);
   enableMotor();
 
-  tCiclo=60/rpm; //Tiempo de ciclo en segundos
-  tIns=tCiclo*(porcentajeInspiratorio/100);
-  tEsp=tCiclo-tCiclo
-  
-  velocidadUno=(pasosPorRevolucion/2)/tIns
-  
-  velocidadUno=(pasosPorRevolucion/2)/tEsp
+//  tCiclo=60/rpm; //Tiempo de ciclo en segundos
+//  tIns=tCiclo*(porcentajeInspiratorio/100);
+//  tEsp=tCiclo-tCiclo
+//  
+//  velocidadUno=(pasosPorRevolucion/2)/tIns
+//  
+//  velocidadUno=(pasosPorRevolucion/2)/tEsp
   
 }
 
