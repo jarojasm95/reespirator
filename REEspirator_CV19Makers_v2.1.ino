@@ -47,9 +47,9 @@ bool editandoMenu = false;
 
 //Constantes motor
 #define pasosPorRevolucion 200 //Suponiendo un motor de 200 pasos/rev sin microstepper
-#define velocidadUno 75       //es un ejemplo
-#define velocidadDos 150      //es un ejemplo
-#define acceleracion 60       //es un ejemplo
+int velocidadUno=75;       //es un ejemplo
+int velocidadDos=150;      //es un ejemplo
+int acceleracion=60;       //es un ejemplo
 
 
 //mis pines son diferentes por ahora!!
@@ -68,7 +68,7 @@ void setup() {
   escribirPantalla(rpm, vol, posMenu, 0);
 
   //Parte motor
-   disableMotor();
+  disableMotor();
   Serial.begin(9600);  // Debugging only
   pinMode(BUZZpin, OUTPUT);
   pinMode(ENDSTOPpin, INPUT_PULLUP);
