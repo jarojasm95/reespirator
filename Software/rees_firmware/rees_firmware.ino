@@ -3,7 +3,7 @@
  * Librerías guardadas en local, no necesaria su descarga
  */
 
-#include "pantalla.h"
+#include "pantalla_parallel.h" // pantalla_parallel.h o cambiar a pantalla_i2c.h
 #include "pinout.h"
 #include "defaults.h"
 
