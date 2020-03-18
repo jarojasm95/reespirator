@@ -20,7 +20,7 @@ Encoder encoder1(DTpin, CLKpin, SWpin);
 //Variable para el menu
 int posMenu = 0;
 bool editandoMenu = false;
-int porcentajeInspiratorio = 60;
+
 
 void inicializarPantalla() {
   //Crear el objeto lcd
