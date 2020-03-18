@@ -38,7 +38,7 @@ Encoder encoder1(DTpin, CLKpin, SWpin);
 byte tecla = 0;
 
 //Variables a controlar
-byte rpm = 15;
+int rpm = 15;
 float vol = 0.5;
 
 //Variable para el menu
@@ -48,8 +48,8 @@ int porcentajeInspiratorio = 60;
 
 //Constantes motor
 #define pasosPorRevolucion 200 //Suponiendo un motor de 200 pasos/rev sin microstepper
-int velocidadUno=0;       //se calcula el valor de inicio en el setup
-int velocidadDos=0;       //idem
+float velocidadUno=0;       //se calcula el valor de inicio en el setup
+float velocidadDos=0;       //idem
 int acceleracion=6000;      //6000 para que no se note en el tiempo de ciclo 
 float tCiclo, tIns, tEsp;
 
@@ -57,18 +57,19 @@ float tCiclo, tIns, tEsp;
 //mis pines son diferentes por ahora!!
 AccelStepper stepper(1, DIRpin, PULpin); //direction Digital 6 (CW), pulses Digital 7 (CLK)
 
-boolean modo = true, errorFC = true;
+boolean modo = true, errorFC = false;
 
 
 
 void setup() {
   //Iniciamos serial
   Serial.begin (9600);
-  
+  Serial.println ("Inicio");
   //Parte pantalla
-  inicializarPantalla();
-  escribirPantalla(rpm, vol, posMenu, 0);
-
+  //inicializarPantalla();
+  //escribirPantalla(rpm, vol, posMenu, 0);
+  Serial.println ("PANTALLA ESCRITA");
+  
   //Parte motor
   disableMotor();
   Serial.begin(9600);  // Debugging only
@@ -83,13 +84,19 @@ void setup() {
   enableMotor();
 
   tCiclo=60/rpm; //Tiempo de ciclo en segundos
-  tIns=tCiclo*(porcentajeInspiratorio/100);
-  tEsp=tCiclo-tCiclo
+  tIns=(tCiclo*porcentajeInspiratorio)/100;
+  tEsp=tCiclo-tIns;
   
-  velocidadUno=(pasosPorRevolucion/2)/tIns
+  velocidadUno=(pasosPorRevolucion/2)/tIns;
   
-  velocidadUno=(pasosPorRevolucion/2)/tEsp
-  
+  velocidadDos=(pasosPorRevolucion/2)/tEsp;
+
+  Serial.println (tCiclo);
+  Serial.println (tIns);
+  Serial.println (tEsp);
+    Serial.println (".....");
+  Serial.println (velocidadUno);
+  Serial.println (velocidadDos);
 }
 
 
@@ -100,18 +107,30 @@ void loop() {
 //Parte stepper
    stepper.run();
 
+//recalcular valores por si han cambiado en el menu
+
+  tCiclo=60/rpm; //Tiempo de ciclo en segundos
+  tIns=(tCiclo*porcentajeInspiratorio)/100;
+  tEsp=tCiclo-tIns;
+  
+  velocidadUno=(pasosPorRevolucion/2)/tIns;
+  
+  velocidadDos=(pasosPorRevolucion/2)/tEsp;
+  
+
   if(!stepper.isRunning() && !errorFC) //si ha teminado media vuelta
     {
       if (modo)                         //velociad 1
         {
         Serial.println("Modo 1");
         stepper.setMaxSpeed(velocidadUno);
+        Serial.println (velocidadUno);
         stepper.move(pasosPorRevolucion/2);
         }
       else                                //velociadad 2
         {
         Serial.println("Modo 2, verificar el final de carrera");
-
+        
         if (digitalRead(ENDSTOPpin) )//no se ha llegado al final
           {
             errorFC=true;
@@ -120,7 +139,8 @@ void loop() {
           }
 
        else 
-          {          
+          {      
+          Serial.println (velocidadDos);    
           stepper.setMaxSpeed(velocidadDos);
           stepper.move(pasosPorRevolucion/2);  
           }      
