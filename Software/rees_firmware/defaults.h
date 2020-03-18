@@ -5,7 +5,7 @@
 
 
 //Variables a controlar
-byte rpm = 15;
+int rpm = 15;
 float vol = 0.5;
 
 
