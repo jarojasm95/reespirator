@@ -50,7 +50,7 @@ void inicializarPantalla() {
   };
   
   // Inicializar el LCD
-//  lcd.init();
+  lcd.begin();
   //Creamos el icono flecha
   lcd.createChar(0, Flecha);
   lcd.createChar(1, Cruz);
