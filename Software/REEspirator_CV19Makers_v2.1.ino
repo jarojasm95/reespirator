@@ -34,6 +34,7 @@ LiquidCrystal_I2C lcd(DIR, 16, 2);
 //Crea el objeto Encoder Rotativo
 Encoder encoder1(DTpin, CLKpin, SWpin);
 
+
  //Variable donde almacenamos el return de leerEncoder
 byte tecla = 0;
 
@@ -44,7 +45,7 @@ float vol = 0.5;
 //Variable para el menu
 int posMenu = 0;
 bool editandoMenu = false;
-int porcentajeInspiratorio = 60;
+int porcentajeInspiratorio = 80;
 
 //Constantes motor
 #define pasosPorRevolucion 200 //Suponiendo un motor de 200 pasos/rev sin microstepper
@@ -66,8 +67,8 @@ void setup() {
   Serial.begin (9600);
   Serial.println ("Inicio");
   //Parte pantalla
-  //inicializarPantalla();
-  //escribirPantalla(rpm, vol, posMenu, 0);
+  inicializarPantalla();
+  escribirPantalla(rpm, vol, posMenu, 0);
   Serial.println ("PANTALLA ESCRITA");
   
   //Parte motor
@@ -125,6 +126,7 @@ void loop() {
         Serial.println("Modo 1");
         stepper.setMaxSpeed(velocidadUno);
         Serial.println (velocidadUno);
+        Serial.println (pasosPorRevolucion/2);
         stepper.move(pasosPorRevolucion/2);
         }
       else                                //velociadad 2
@@ -134,13 +136,15 @@ void loop() {
         if (digitalRead(ENDSTOPpin) )//no se ha llegado al final
           {
             errorFC=true;
-            stepper.move(100);
+             Serial.println ("ZUMBA");
+            stepper.move(1);
             digitalWrite(BUZZpin, true);
           }
 
        else 
           {      
-          Serial.println (velocidadDos);    
+          Serial.println (velocidadDos);  
+           Serial.println (pasosPorRevolucion/2);  
           stepper.setMaxSpeed(velocidadDos);
           stepper.move(pasosPorRevolucion/2);  
           }      
@@ -154,8 +158,9 @@ void loop() {
         if (digitalRead(ENDSTOPpin)) //no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC 
           {
             errorFC=true;
-            stepper.move(3); 
+            stepper.move(1); 
             digitalWrite(BUZZpin, true);
+            Serial.println ("ZUMBA");
           }
          else                           // cuando lo ha localizado ordena seguir con velocidad 2
           {
