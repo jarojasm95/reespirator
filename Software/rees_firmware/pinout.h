@@ -13,7 +13,7 @@
 //pines pantalla parallel  //parallel
 #define LCD_RS A0
 #define LCD_E  A1
-#define LCD_D4 A3
+#define LCD_D4 A2
 #define LCD_D5 A3
 #define LCD_D6 A4
 #define LCD_D7 A5
@@ -27,8 +27,8 @@
 #define SWpin  9
 
 //Stepper driver
-#define PULpin 6
-#define DIRpin 7
+#define PULpin 7
+#define DIRpin 6
 #define ENpin 8
 
 //Buzzer
