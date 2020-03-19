@@ -41,28 +41,27 @@ void setup() {
   Serial.println ("Inicio");
   //Parte pantalla
   pantalla1.begin();
-  Serial.println ("PANTALLA ESCRITA");
+
   
-  //Parte motor
-  digitalWrite(ENpin, LOW);
-  Serial.begin(9600);  // Debugging only
+  //Zumbador
   pinMode(BUZZpin, OUTPUT);
-  pinMode(ENDSTOPpin, INPUT);   //el sensor de efecto hall da un 1 cuando detecta
-  pinMode(ENpin,OUTPUT); //test zumbador
-  digitalWrite(BUZZpin, HIGH);
+  digitalWrite(BUZZpin, HIGH); //test zumbador
   delay(100);
   digitalWrite(BUZZpin, LOW);
+  
+  //FC efecto hall
+  pinMode(ENDSTOPpin, INPUT);   //el sensor de efecto hall da un 1 cuando detecta
+  
+  
+  //Parte motor
+  pinMode(ENpin,OUTPUT); 
+  digitalWrite(ENpin, LOW);
+
   Serial.println("Setup");
   stepper.setAcceleration(acceleracion);
-  digitalWrite(ENpin, HIGH); //habilita el motor
 
-  tCiclo=60/rpm; //Tiempo de ciclo en segundos
-  tIns=(tCiclo*porcentajeInspiratorio)/100;
-  tEsp=tCiclo-tIns;
-  
-  velocidadUno=(pasosPorRevolucion * microStepper/2)/tIns;
-  
-  velocidadDos=(pasosPorRevolucion * microStepper/2)/tEsp;
+    
+  calcularConstantes();  //calcular las constantes de movimiento
 
   Serial.println (tCiclo);
   Serial.println (tIns);
@@ -70,6 +69,8 @@ void setup() {
   Serial.println (".....");
   Serial.println (velocidadUno);
   Serial.println (velocidadDos);
+  
+  digitalWrite(ENpin, HIGH); //habilita el motor
 }
 
 
@@ -81,62 +82,54 @@ void loop() {
    stepper.run();
 
 //recalcular valores por si han cambiado en el menu
+  calcularConstantes();
   
-  tCiclo=60/rpm; //Tiempo de ciclo en segundos
-  tIns=(tCiclo*porcentajeInspiratorio)/100;
-  tEsp=tCiclo-tIns;
-  
-  velocidadUno=(pasosPorRevolucion * microStepper/2)/tIns;
-  
-  velocidadDos=(pasosPorRevolucion * microStepper/2)/tEsp;
   
 
   if(!stepper.isRunning() && modo && !errorFC ) // Primera mitad del ciclo
     {
     Serial.println("Modo 1");
     stepper.setMaxSpeed(velocidadUno * microStepper);
-    Serial.println (velocidadUno);
-    Serial.println (pasosPorRevolucion * microStepper/2);
+
     stepper.move(pasosPorRevolucion * microStepper/2);
     modo = !modo;
     }
     
   if(!stepper.isRunning() && !modo && !errorFC) // segunda mitad del ciclo
     {
-    Serial.println("Modo 2, verificar el final de carrera");
+    Serial.println("Modo 2");
         
     if (digitalRead(ENDSTOPpin) )              //se ha llegado al final de carrera en el momento que toca pensar que esta defino como pullup
         {
-        Serial.println (velocidadDos);  
-        Serial.println (pasosPorRevolucion * microStepper/2);  
+        Serial.println("Final de carrera OK");
         stepper.setMaxSpeed(velocidadDos * microStepper);
         stepper.move(pasosPorRevolucion * microStepper/2);  
         modo = !modo;
         }
 
-       else 
-        {     
+       else                                     // si acabada la segunda parte del movimiento no se ha llegado al SENSOR HALL entonces da un paso y vuelve a hacer la comprovocacion
+        {
+        Serial.println("Final de carrera NO DETECTADO: Buscando FC");
         errorFC=true;
-        Serial.println ("ZUMBA");
+        digitalWrite(BUZZpin, true);     //activa el zumbador
         stepper.move(1 * microStepper);
-        digitalWrite(BUZZpin, true);
         }      
     }
       
 
-    }
 
      else if (!stepper.isRunning() && errorFC) //si estamos en error y ha echo los pasos extra en busca del Final de Carrera
       {
         if (!digitalRead(ENDSTOPpin))           //no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC 
           {
+            Serial.println("--Buscando FC");
             errorFC=true;
             stepper.move(1); 
-            digitalWrite(BUZZpin, true);
-            Serial.println ("ZUMBA");
+            
           }
          else                                    // cuando lo ha localizado ordena seguir con velocidad 2
           {
+            Serial.println("Detectado FC: restableciendo el origen");
             errorFC =false;
             digitalWrite(BUZZpin, false);       //apaga el zumbador
             stepper.setMaxSpeed(velocidadDos * microStepper);
@@ -144,4 +137,15 @@ void loop() {
             modo = !modo;                       //cambiamos de velocidad
           }
       }
+}
+
+void calcularConstantes ()
+{
+  tCiclo=60/rpm; //Tiempo de ciclo en segundos
+  tIns=(tCiclo*porcentajeInspiratorio)/100;
+  tEsp=tCiclo-tIns;
+  
+  velocidadUno=(pasosPorRevolucion * microStepper/2)/tIns;
+  
+  velocidadDos=(pasosPorRevolucion * microStepper/2)/tEsp;
 }
