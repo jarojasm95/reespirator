@@ -1,4 +1,3 @@
-
   
 #include "pinout.h"
 #include "pantalla.h"
@@ -33,15 +32,7 @@ Encoder encoder1(DTpin, CLKpin, SWpin);
 //pantalla
 Pantalla pantalla1=Pantalla();
 
-void enableMotor ()
-{
-  digitalWrite(ENpin, HIGH);
-}
 
-void disableMotor ()
-{
-  digitalWrite(ENpin, LOW);
-}
 
 
 void setup() {
@@ -53,17 +44,17 @@ void setup() {
   Serial.println ("PANTALLA ESCRITA");
   
   //Parte motor
-  disableMotor();
+  digitalWrite(ENpin, LOW);
   Serial.begin(9600);  // Debugging only
   pinMode(BUZZpin, OUTPUT);
-  pinMode(ENDSTOPpin, INPUT_PULLUP);
+  pinMode(ENDSTOPpin, INPUT);   //el sensor de efecto hall da un 1 cuando detecta
   pinMode(ENpin,OUTPUT); //test zumbador
   digitalWrite(BUZZpin, HIGH);
   delay(100);
   digitalWrite(BUZZpin, LOW);
   Serial.println("Setup");
   stepper.setAcceleration(acceleracion);
-  enableMotor();
+  digitalWrite(ENpin, HIGH); //habilita el motor
 
   tCiclo=60/rpm; //Tiempo de ciclo en segundos
   tIns=(tCiclo*porcentajeInspiratorio)/100;
@@ -100,55 +91,57 @@ void loop() {
   velocidadDos=(pasosPorRevolucion/2)/tEsp;
   
 
-  if(!stepper.isRunning() && !errorFC) //si ha teminado media vuelta
+  if(!stepper.isRunning() && modo && !errorFC ) // Primera mitad del ciclo
     {
-      if (modo)                         //velociad 1
-        {
-        Serial.println("Modo 1");
-        stepper.setMaxSpeed(velocidadUno);
-        Serial.println (velocidadUno);
-        Serial.println (pasosPorRevolucion/2);
-        stepper.move(pasosPorRevolucion/2);
-        }
-      else                                //velociadad 2
-        {
-        Serial.println("Modo 2, verificar el final de carrera");
+    Serial.println("Modo 1");
+    stepper.setMaxSpeed(velocidadUno);
+    Serial.println (velocidadUno);
+    Serial.println (pasosPorRevolucion/2);
+    stepper.move(pasosPorRevolucion/2);
+    modo = !modo;
+    }
+    
+  if(!stepper.isRunning() && !modo && !errorFC) // segunda mitad del ciclo
+    {
+    Serial.println("Modo 2, verificar el final de carrera");
         
-        if (digitalRead(ENDSTOPpin) )//no se ha llegado al final
-          {
-            errorFC=true;
-             Serial.println ("ZUMBA");
-            stepper.move(1);
-            digitalWrite(BUZZpin, true);
-          }
+    if (digitalRead(ENDSTOPpin) )              //se ha llegado al final de carrera en el momento que toca pensar que esta defino como pullup
+        {
+        Serial.println (velocidadDos);  
+        Serial.println (pasosPorRevolucion/2);  
+        stepper.setMaxSpeed(velocidadDos);
+        stepper.move(pasosPorRevolucion/2);  
+        modo = !modo;
+        }
 
        else 
-          {      
-          Serial.println (velocidadDos);  
-           Serial.println (pasosPorRevolucion/2);  
-          stepper.setMaxSpeed(velocidadDos);
-          stepper.move(pasosPorRevolucion/2);  
-          }      
-        }
-      modo = !modo;
+        {     
+        errorFC=true;
+        Serial.println ("ZUMBA");
+        stepper.move(1);
+        digitalWrite(BUZZpin, true);
+        }      
+    }
+      
 
     }
 
-     else if (!stepper.isRunning() && errorFC) //si hay un error pero ha echo los 100 pasos extra en busca del Final de Carrera
+     else if (!stepper.isRunning() && errorFC) //si estamos en error y ha echo los pasos extra en busca del Final de Carrera
       {
-        if (digitalRead(ENDSTOPpin)) //no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC 
+        if (!digitalRead(ENDSTOPpin))           //no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC 
           {
             errorFC=true;
             stepper.move(1); 
             digitalWrite(BUZZpin, true);
             Serial.println ("ZUMBA");
           }
-         else                           // cuando lo ha localizado ordena seguir con velocidad 2
+         else                                    // cuando lo ha localizado ordena seguir con velocidad 2
           {
             errorFC =false;
-            digitalWrite(BUZZpin, false);
+            digitalWrite(BUZZpin, false);       //apaga el zumbador
             stepper.setMaxSpeed(velocidadDos);
             stepper.move(pasosPorRevolucion/2);
+            modo = !modo;                       //cambiamos de velocidad
           }
       }
 }
