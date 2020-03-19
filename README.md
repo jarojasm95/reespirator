@@ -1,6 +1,6 @@
 # Reespirator
 
-V2.1 El motor se mueve
+[Documentación y hardware](https://gitlab.com/coronavirusmakers/reespirator-doc)
 
 ## Resources
 
