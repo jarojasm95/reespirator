@@ -27,8 +27,8 @@
 #define SWpin  9
 
 //Stepper driver
-#define PULpin 7
-#define DIRpin 6
+#define PULpin 6
+#define DIRpin 7
 #define ENpin 8
 
 //Buzzer
