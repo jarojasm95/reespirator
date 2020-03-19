@@ -2,13 +2,14 @@
 #include "Arduino.h"
 
 const int8_t KNOBDIR[] = {
-  0, -1,  1,  0,
-  1,  0,  0, -1,
-  -1,  0,  0,  1,
-  0,  1, -1,  0
+     0, -1,  1,  0,
+     1,  0,  0, -1,
+    -1,  0,  0,  1,
+     0,  1, -1,  0
 };
 
-Encoder::Encoder(int A, int B, int pulsador) {
+Encoder::Encoder(int A, int B, int pulsador)
+{
   _pin1 = A;
   _pin2 = B;
   _pulsador = pulsador;
@@ -29,46 +30,51 @@ Encoder::Encoder(int A, int B, int pulsador) {
   _tiempo = 0;
 }
 
-long  Encoder::getPosition() {
+long Encoder::getPosition()
+{
   return _positionExt;
 }
 
-int  Encoder::getDirection() {
+int Encoder::getDirection()
+{
 
-    int ret = 0;
+  int ret = 0;
 
-    if( _positionExtPrev > _positionExt )
-    {
-        ret = -1;
-        _positionExtPrev = _positionExt;
-    }
-    else if( _positionExtPrev < _positionExt )
-    {
-        ret = 1;
-        _positionExtPrev = _positionExt;
-    }
-    else
-    {
-        ret = 0;
-        _positionExtPrev = _positionExt;
-    }
+  if (_positionExtPrev > _positionExt)
+  {
+    ret = -1;
+    _positionExtPrev = _positionExt;
+  }
+  else if (_positionExtPrev < _positionExt)
+  {
+    ret = 1;
+    _positionExtPrev = _positionExt;
+  }
+  else
+  {
+    ret = 0;
+    _positionExtPrev = _positionExt;
+  }
 
-    return ret;
+  return ret;
 }
 
-void Encoder::setPosition(long newPosition) {
-  _position = ((newPosition<<2) | (_position & 0x03L));
+void Encoder::setPosition(long newPosition)
+{
+  _position = ((newPosition << 2) | (_position & 0x03L));
   _positionExt = newPosition;
   _positionExtPrev = newPosition;
 }
 
-void Encoder::tick(void) {
+void Encoder::tick(void)
+{
   int sig1 = digitalRead(_pin1);
   int sig2 = digitalRead(_pin2);
   int8_t thisState = sig1 | (sig2 << 1);
 
-  if (_oldState != thisState) {
-    _position += KNOBDIR[thisState | (_oldState<<2)];
+  if (_oldState != thisState)
+  {
+    _position += KNOBDIR[thisState | (_oldState << 2)];
 
     if (thisState == LATCHSTATE)
       _positionExt = _position >> 2;
@@ -77,14 +83,19 @@ void Encoder::tick(void) {
   } // if
 } // tick()
 
-int Encoder::leerPulsador() {
-  if (digitalRead(_pulsador) != 1) {
-    if (!_flag) {
+int Encoder::leerPulsador()
+{
+  if (digitalRead(_pulsador) != 1)
+  {
+    if (!_flag)
+    {
       _tiempo = millis();
       _flag = true;
     }
-    while (digitalRead(_pulsador) == 0) {
-      if (millis() - _tiempo > 300) {
+    while (digitalRead(_pulsador) == 0)
+    {
+      if (millis() - _tiempo > 300)
+      {
         _flag = false;
         return 5;
       }
@@ -93,19 +104,27 @@ int Encoder::leerPulsador() {
   return 0;
 }
 
-int Encoder::leerEncoder() {
+int Encoder::leerEncoder()
+{
   static int _pos = 0;
   tick();
   int _newPos = getPosition();
-  if (_pos > _newPos) {
+  if (_pos > _newPos)
+  {
     _pos = _newPos;
     return 8;
-  } else if (_pos < _newPos) {
+  }
+  else if (_pos < _newPos)
+  {
     _pos = _newPos;
     return 2;
-  } else if (leerPulsador() == 5){
+  }
+  else if (leerPulsador() == 5)
+  {
     return 5;
-  } else {
+  }
+  else
+  {
     return 0;
   }
 }
