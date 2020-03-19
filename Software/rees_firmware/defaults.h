@@ -8,6 +8,7 @@
 
 //Valores motor
 #define pasosPorRevolucion 200 //Suponiendo un motor de 200 pasos/rev sin microstepper
+#define microStepper 16
 #define DEFAULT_ACCELERACION 6000
 //Valores por defecto
 
