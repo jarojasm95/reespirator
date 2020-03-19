@@ -41,7 +41,6 @@ void setup() {
   Serial.println ("Inicio");
   //Parte pantalla
   pantalla1.begin();
-  escribirPantalla(rpm, vol, posMenu, 0); //////Verificar que esta linea sea necesaria, no se si del branch obejtos se elimino o si me la cargue yo sin querer
 
   
   //Zumbador
