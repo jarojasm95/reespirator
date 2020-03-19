@@ -17,7 +17,7 @@ int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
 
 float velocidadUno=0;       //se calcula el valor de inicio en el setup
 float velocidadDos=0;       //idem
-int acceleracion=DEFAULT_ACCELERACION;      
+int acceleracion=DEFAULT_ACCELERACION * microStepper;      
 float tCiclo, tIns, tEsp;
 
 
@@ -60,14 +60,14 @@ void setup() {
   tIns=(tCiclo*porcentajeInspiratorio)/100;
   tEsp=tCiclo-tIns;
   
-  velocidadUno=(pasosPorRevolucion/2)/tIns;
+  velocidadUno=(pasosPorRevolucion * microStepper/2)/tIns;
   
-  velocidadDos=(pasosPorRevolucion/2)/tEsp;
+  velocidadDos=(pasosPorRevolucion * microStepper/2)/tEsp;
 
   Serial.println (tCiclo);
   Serial.println (tIns);
   Serial.println (tEsp);
-    Serial.println (".....");
+  Serial.println (".....");
   Serial.println (velocidadUno);
   Serial.println (velocidadDos);
 }
@@ -81,23 +81,23 @@ void loop() {
    stepper.run();
 
 //recalcular valores por si han cambiado en el menu
-
+  
   tCiclo=60/rpm; //Tiempo de ciclo en segundos
   tIns=(tCiclo*porcentajeInspiratorio)/100;
   tEsp=tCiclo-tIns;
   
-  velocidadUno=(pasosPorRevolucion/2)/tIns;
+  velocidadUno=(pasosPorRevolucion * microStepper/2)/tIns;
   
-  velocidadDos=(pasosPorRevolucion/2)/tEsp;
+  velocidadDos=(pasosPorRevolucion * microStepper/2)/tEsp;
   
 
   if(!stepper.isRunning() && modo && !errorFC ) // Primera mitad del ciclo
     {
     Serial.println("Modo 1");
-    stepper.setMaxSpeed(velocidadUno);
+    stepper.setMaxSpeed(velocidadUno * microStepper);
     Serial.println (velocidadUno);
-    Serial.println (pasosPorRevolucion/2);
-    stepper.move(pasosPorRevolucion/2);
+    Serial.println (pasosPorRevolucion * microStepper/2);
+    stepper.move(pasosPorRevolucion * microStepper/2);
     modo = !modo;
     }
     
@@ -108,9 +108,9 @@ void loop() {
     if (digitalRead(ENDSTOPpin) )              //se ha llegado al final de carrera en el momento que toca pensar que esta defino como pullup
         {
         Serial.println (velocidadDos);  
-        Serial.println (pasosPorRevolucion/2);  
-        stepper.setMaxSpeed(velocidadDos);
-        stepper.move(pasosPorRevolucion/2);  
+        Serial.println (pasosPorRevolucion * microStepper/2);  
+        stepper.setMaxSpeed(velocidadDos * microStepper);
+        stepper.move(pasosPorRevolucion * microStepper/2);  
         modo = !modo;
         }
 
@@ -118,7 +118,7 @@ void loop() {
         {     
         errorFC=true;
         Serial.println ("ZUMBA");
-        stepper.move(1);
+        stepper.move(1 * microStepper);
         digitalWrite(BUZZpin, true);
         }      
     }
@@ -139,8 +139,8 @@ void loop() {
           {
             errorFC =false;
             digitalWrite(BUZZpin, false);       //apaga el zumbador
-            stepper.setMaxSpeed(velocidadDos);
-            stepper.move(pasosPorRevolucion/2);
+            stepper.setMaxSpeed(velocidadDos * microStepper);
+            stepper.move(pasosPorRevolucion * microStepper/2);
             modo = !modo;                       //cambiamos de velocidad
           }
       }
