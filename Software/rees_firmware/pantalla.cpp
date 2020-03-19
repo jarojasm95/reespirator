@@ -10,7 +10,7 @@ Pantalla::Pantalla() {
  #ifdef I2C
     lcd.begin();
  #else
-    lcd.begin(20,4);
+    lcd.begin(LCD_COLS, LCD_ROWS); 
  #endif
     byte _Flecha[] = {
     B00000,

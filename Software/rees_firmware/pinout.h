@@ -3,6 +3,11 @@
 
 #include "Arduino.h"
 
+//PANTALLA
+
+#define LCD_ROWS 2
+#define LCD_COLS 16
+
 #ifdef I2C  //i2c
 
 //Dirección de LCD I2C

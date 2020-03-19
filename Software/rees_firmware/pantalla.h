@@ -22,7 +22,7 @@ class Pantalla {
     bool editando();
   private:
    #ifdef I2C
-    LiquidCrystal_I2C lcd = LiquidCrystal_I2C(I2C_DIR, 20, 4);
+    LiquidCrystal_I2C lcd = LiquidCrystal_I2C(I2C_DIR, LCD_COLS, LCD_ROWS);
    #else
     LiquidCrystal lcd = LiquidCrystal(LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
    #endif
