@@ -118,8 +118,8 @@ void loop() {
       
 
 
-     else if (!stepper.isRunning() && errorFC) //si estamos en error y ha echo los pasos extra en busca del Final de Carrera
-      {
+    if (!stepper.isRunning() && errorFC) //si estamos en error y ha echo los pasos extra en busca del Final de Carrera
+        {
         if (!digitalRead(ENDSTOPpin))           //no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC 
           {
             Serial.println("--Buscando FC");
