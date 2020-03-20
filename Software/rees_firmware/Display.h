@@ -9,7 +9,6 @@
 
 #include "pinout.h"
 #include "defaults.h"
-#include "globals.h"
 
 class Display
 {
