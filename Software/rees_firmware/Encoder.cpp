@@ -80,10 +80,65 @@ void Encoder::tick(void)
       _positionExt = _position >> 2;
 
     _oldState = thisState;
-  } // if
-} // tick()
+  }
+}
 
-int Encoder::leerPulsador()
+/**
+ * @brief Modifica un valor dicotómico entre 0 y 1.
+ *
+ * Cuando se gira el encoder, el valor se pasa de 0 a 1 y
+ * de 1 a 0 cada vez que se mueve el dial.
+ *
+ * @param valor valor a actualizar
+ */
+void Encoder::permutarValor(int* valor) {
+  // Giramos horario o antihorario
+  if (leerEncoder() == 2 || leerEncoder() == 8) {
+    if (*valor == 0) {
+      *valor = 1;
+    } else if (*valor == 1) {
+      *valor = 0;
+    }
+  }
+}
+
+void Encoder::permutarValor(bool* valor) {
+  // Giramos horario o antihorario
+  if (leerEncoder() == 2 || leerEncoder() == 8) {
+    *valor = !(*valor);
+  }
+}
+
+/**
+ * @brief Altera un valor entero un incremento delta.
+ *
+ * Incrementa (antihorario) o decrementa (horario) un
+ * valor dado, un delta determinado.
+ *
+ * @param valor valor a actualizar
+ * @param delta incremento, por defecto: 1
+ */
+void Encoder::actualizarValor(int* valor, int delta) {
+  // Giramos horario (Subimos en el menu)
+  if (leerEncoder() == 2) {
+    *valor = *valor - delta;
+  // Giramos antihorario (Subimos en el menu)
+  } else if (leerEncoder() == 8) {
+    *valor = *valor + delta;
+  }
+}
+
+void Encoder::actualizarValor(float* valor, float delta) {
+  // Giramos horario (Subimos en el menu)
+  if (leerEncoder() == 2) {
+    *valor = *valor - delta;
+  // Giramos antihorario (Subimos en el menu)
+  } else if (leerEncoder() == 8) {
+    *valor = *valor + delta;
+  }
+}
+
+bool Encoder::leerPulsador()
 {
   if (digitalRead(_pulsador) != 1)
   {
@@ -97,11 +152,11 @@ int Encoder::leerPulsador()
       if (millis() - _tiempo > 300)
       {
         _flag = false;
-        return 5;
+        return true;
       }
     }
   }
-  return 0;
+  return false;
 }
 
 int Encoder::leerEncoder()
@@ -109,22 +164,23 @@ int Encoder::leerEncoder()
   static int _pos = 0;
   tick();
   int _newPos = getPosition();
+
+  // Giramos antihorario (Subimos en el menu)
   if (_pos > _newPos)
   {
     _pos = _newPos;
     return 8;
   }
+  // Giramos horario (Subimos en el menu)
   else if (_pos < _newPos)
   {
     _pos = _newPos;
     return 2;
   }
-  else if (leerPulsador() == 5)
+  // Pulsamos (Modificamos valor)
+  if (leerPulsador() == true)
   {
     return 5;
   }
-  else
-  {
-    return 0;
-  }
+  return 0;
 }

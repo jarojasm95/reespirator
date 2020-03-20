@@ -16,9 +16,11 @@ class Pantalla
 public:
   Pantalla(); //init
   void begin();
+  void writeLine(int line, String message = "", int offsetLeft = 0);
+
   void write(int p_rpm, float p_vol, int _posMenu, int caracter);
   void update(int tecla);
-  bool editando();
+  void clear();
 
 private:
 #ifdef I2C

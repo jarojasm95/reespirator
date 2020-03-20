@@ -36,6 +36,23 @@ Pantalla::Pantalla()
   lcd.createChar(1, _Cruz);
 }
 
+
+
+
+
+void Pantalla::writeLine(int line, String message, int offsetLeft) {
+  lcd.setCursor(0, line);
+  lcd.print("");
+  lcd.setCursor(offsetLeft, line);
+  lcd.print(message);
+}
+
+
+
+
+
+
+
 void Pantalla::write(int rpm, float vol, int posMenu, int caracter)
 {
 
@@ -53,45 +70,50 @@ void Pantalla::write(int rpm, float vol, int posMenu, int caracter)
   lcd.write(caracter);
 }
 
-void Pantalla::begin()
+void Pantalla::clear()
 {
-  Pantalla::write(rpm, vol, 0, 0);
+  lcd.clear();
 }
 
-void Pantalla::update(int tecla)
+void Pantalla::begin()
 {
-  switch (tecla)
+  write(rpm, vol, 0, 0);
+}
+
+void Pantalla::update(int sentido)
+{
+  switch (sentido)
   {
-  case 2: //Giramos horario (Bajamos en el menu)
+  case 2: // Giramos horario (Bajamos en el menu)
     if (_posMenu == 0 && !_editandoMenu)
     {
       _posMenu++;
-      Pantalla::write(rpm, vol, _posMenu, 0);
+      write(rpm, vol, _posMenu, 0);
     }
     else if (_posMenu == 0 && _editandoMenu)
     {
       rpm++;
-      Pantalla::write(rpm, vol, _posMenu, 1);
+      write(rpm, vol, _posMenu, 1);
     }
     else if (_posMenu == 1 && _editandoMenu)
     {
       vol = vol + 0.1;
-      Pantalla::write(rpm, vol, _posMenu, 1);
+      write(rpm, vol, _posMenu, 1);
     }
     break;
 
-  case 8: //Giramos antihorario (Subimos en el menu)
+  case 8: // Giramos antihorario (Subimos en el menu)
     if (_posMenu == 1 && !_editandoMenu)
     {
       _posMenu--;
-      Pantalla::write(rpm, vol, _posMenu, 0);
+      write(rpm, vol, _posMenu, 0);
     }
     else if (_posMenu == 1 && _editandoMenu)
     {
       if (vol >= 0.1)
       {
         vol = vol - 0.1;
-        Pantalla::write(rpm, vol, _posMenu, 1);
+        write(rpm, vol, _posMenu, 1);
       }
     }
     else if (_posMenu == 0 && _editandoMenu)
@@ -99,20 +121,20 @@ void Pantalla::update(int tecla)
       if (rpm >= 1)
       {
         rpm--;
-        Pantalla::write(rpm, vol, _posMenu, 1);
+        write(rpm, vol, _posMenu, 1);
       }
     }
     break;
 
-  case 5: //Pulsamos (Modificamos valor)
+  case 5: // Pulsamos (Modificamos valor)
     _editandoMenu = !_editandoMenu;
     if (_editandoMenu == true)
     {
-      Pantalla::write(rpm, vol, _posMenu, 1);
+      write(rpm, vol, _posMenu, 1);
     }
     else
     {
-      Pantalla::write(rpm, vol, _posMenu, 0);
+      write(rpm, vol, _posMenu, 0);
     }
     break;
 
