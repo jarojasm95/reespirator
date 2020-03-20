@@ -8,15 +8,14 @@ const int8_t KNOBDIR[] = {
      0,  1, -1,  0
 };
 
-Encoder::Encoder(int A, int B, int pulsador)
-{
-  _pin1 = A;
-  _pin2 = B;
+Encoder::Encoder(int pin1, int pin2, int pulsador) {
+  _pin1 = pin1;
+  _pin2 = pin2;
   _pulsador = pulsador;
 
   // Setup the input pins and turn on pullup resistor
-  pinMode(A, INPUT_PULLUP);
-  pinMode(B, INPUT_PULLUP);
+  pinMode(pin1, INPUT_PULLUP);
+  pinMode(pin2, INPUT_PULLUP);
   pinMode(pulsador, INPUT_PULLUP);
 
   // when not started in motion, the current state of the encoder should be 3
@@ -30,28 +29,24 @@ Encoder::Encoder(int A, int B, int pulsador)
   _tiempo = 0;
 }
 
-long Encoder::getPosition()
-{
+long Encoder::getPosition() {
   return _positionExt;
 }
 
-int Encoder::getDirection()
-{
+// unused
+int Encoder::getDirection() {
 
   int ret = 0;
 
-  if (_positionExtPrev > _positionExt)
-  {
+  if (_positionExtPrev > _positionExt) {
     ret = -1;
     _positionExtPrev = _positionExt;
   }
-  else if (_positionExtPrev < _positionExt)
-  {
+  else if (_positionExtPrev < _positionExt) {
     ret = 1;
     _positionExtPrev = _positionExt;
   }
-  else
-  {
+  else {
     ret = 0;
     _positionExtPrev = _positionExt;
   }
@@ -59,21 +54,19 @@ int Encoder::getDirection()
   return ret;
 }
 
-void Encoder::setPosition(long newPosition)
-{
+// unused
+void Encoder::setPosition(long newPosition) {
   _position = ((newPosition << 2) | (_position & 0x03L));
   _positionExt = newPosition;
   _positionExtPrev = newPosition;
 }
 
-void Encoder::tick(void)
-{
+void Encoder::tick(void) {
   int sig1 = digitalRead(_pin1);
   int sig2 = digitalRead(_pin2);
   int8_t thisState = sig1 | (sig2 << 1);
 
-  if (_oldState != thisState)
-  {
+  if (_oldState != thisState)   {
     _position += KNOBDIR[thisState | (_oldState << 2)];
 
     if (thisState == LATCHSTATE)
@@ -91,9 +84,9 @@ void Encoder::tick(void)
  *
  * @param valor valor a actualizar
  */
-void Encoder::permutarValor(int* valor) {
+void Encoder::swapValue(int* valor) {
   // Giramos horario o antihorario
-  if (leerEncoder() == 2 || leerEncoder() == 8) {
+  if (read() == 2 || read() == 8) {
     if (*valor == 0) {
       *valor = 1;
     } else if (*valor == 1) {
@@ -102,9 +95,9 @@ void Encoder::permutarValor(int* valor) {
   }
 }
 
-void Encoder::permutarValor(bool* valor) {
+void Encoder::swapValue(bool* valor) {
   // Giramos horario o antihorario
-  if (leerEncoder() == 2 || leerEncoder() == 8) {
+  if (read() == 2 || read() == 8) {
     *valor = !(*valor);
   }
 }
@@ -118,39 +111,40 @@ void Encoder::permutarValor(bool* valor) {
  * @param valor valor a actualizar
  * @param delta incremento, por defecto: 1
  */
-void Encoder::actualizarValor(int* valor, int delta) {
+void Encoder::updateValue(int* valor, int delta) {
   // Giramos horario (Subimos en el menu)
-  if (leerEncoder() == 2) {
+  if (read() == 2) {
     *valor = *valor - delta;
   // Giramos antihorario (Subimos en el menu)
-  } else if (leerEncoder() == 8) {
+  } else if (read() == 8) {
     *valor = *valor + delta;
   }
 }
 
-void Encoder::actualizarValor(float* valor, float delta) {
+void Encoder::updateValue(float* valor, float delta) {
   // Giramos horario (Subimos en el menu)
-  if (leerEncoder() == 2) {
+  if (read() == 2) {
     *valor = *valor - delta;
   // Giramos antihorario (Subimos en el menu)
-  } else if (leerEncoder() == 8) {
+  } else if (read() == 8) {
     *valor = *valor + delta;
   }
 }
 
-bool Encoder::leerPulsador()
-{
-  if (digitalRead(_pulsador) != 1)
-  {
-    if (!_flag)
-    {
+/**
+ * @brief Lee la señal emitida al pulsar el encoder
+ *
+ * @return true cuando se pulsa
+ * @return false si no se ha pulsado
+ */
+bool Encoder::readButton() {
+  if (digitalRead(_pulsador) != 1) {
+    if (!_flag) {
       _tiempo = millis();
       _flag = true;
     }
-    while (digitalRead(_pulsador) == 0)
-    {
-      if (millis() - _tiempo > 300)
-      {
+    while (digitalRead(_pulsador) == 0) {
+      if (millis() - _tiempo > 300) {
         _flag = false;
         return true;
       }
@@ -159,27 +153,28 @@ bool Encoder::leerPulsador()
   return false;
 }
 
-int Encoder::leerEncoder()
-{
+/**
+ * @brief Lee el giro del knob del encoder.
+ *
+ * @return int giro antihorario: 8, giro horario: 2
+ */
+int Encoder::read() {
   static int _pos = 0;
   tick();
   int _newPos = getPosition();
 
   // Giramos antihorario (Subimos en el menu)
-  if (_pos > _newPos)
-  {
+  if (_pos > _newPos) {
     _pos = _newPos;
     return 8;
   }
   // Giramos horario (Subimos en el menu)
-  else if (_pos < _newPos)
-  {
+  else if (_pos < _newPos) {
     _pos = _newPos;
     return 2;
   }
   // Pulsamos (Modificamos valor)
-  if (leerPulsador() == true)
-  {
+  if (readButton()) {
     return 5;
   }
   return 0;

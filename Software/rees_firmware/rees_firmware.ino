@@ -1,38 +1,38 @@
 #include "defaults.h"
 #include "pinout.h"
-#include "Pantalla.h"
+#include "Display.h"
 #include "Encoder.h"
 
 #include "src/AccelStepper/AccelStepper.h"
 
-// Variables globales para la pantalla -> globals.h
+// Variables globales para la Display -> globals.h
 
-int rpm = DEFAULT_RPM;
-float vol = DEFAULT_VOL;
+int rpm                    = DEFAULT_RPM;
 int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
-int estatura = DEFAULT_ESTATURA;
-int sexo = DEFAULT_SEXO; // 0: varón, 1: mujer
-float volumenTidal;
+int estatura               = DEFAULT_ESTATURA;
+int sexo                   = DEFAULT_SEXO; // 0: varón, 1: mujer
+int microStepper           = DEFAULT_MICROSTEPPER;
+int aceleracion            = DEFAULT_ACELERACION * microStepper;
+int pasosPorRevolucion     = DEFAULT_PASOS_POR_REVOLUCION;
+float flujoTrigger         = DEFAULT_FLUJO_TRIGGER;
 
-float velocidadUno = 0.0; // se calcula el valor de inicio en el setup
-float velocidadDos = 0.0; // idem
-int microStepper = DEFAULT_MICROSTEPPER;
-int aceleracion = DEFAULT_ACELERACION * microStepper;
-int pasosPorRevolucion = DEFAULT_PASOS_POR_REVOLUCION;
 bool tieneTrigger;
-float flujoTrigger = DEFAULT_FLUJO_TRIGGER;
-float tCiclo, tIns, tEsp;
+bool modo = true, errorFC = false;
+float volumenTidal;
+float velocidadUno, velocidadDos, tCiclo, tIns, tEsp;
 
 // pines en pinout.h
 AccelStepper stepper(AccelStepper::DRIVER, DIRpin, PULpin); // direction Digital 6 (CW), pulses Digital 7 (CLK)
 
-boolean modo = true, errorFC = false;
+// Encoder
+Encoder encoder(DTpin, CLKpin, SWpin);
 
-// encoder
-Encoder encoder1(DTpin, CLKpin, SWpin);
+// Display
+Display display = Display();
 
-// pantalla
-Pantalla pantalla1 = Pantalla();
+// =========================================================================
+// FUNCIONES DE CÁLCULO
+// =========================================================================
 
 /**
  * @brief estima el volumen tidal en función de estatura y sexo, en ml.
@@ -58,15 +58,15 @@ void calcularVolumenTidal(float* volumenTidal, int estatura, int sexo) {
  *
  * Calcula a partir de las respiraciones por minuto, los tiempos de ciclo,
  * inspiratorio y espiratorio, y las velocidades uno y dos.
- * @param velocidadUno 
- * @param velocidadDos 
- * @param tIns 
- * @param tEsp 
- * @param tCiclo 
- * @param pasosPorRevolucion 
- * @param microStepper 
- * @param porcentajeInspiratorio 
- * @param rpm 
+ * @param velocidadUno TODO: explicación?
+ * @param velocidadDos TODO: explicación?
+ * @param tIns tiempo de inspiracion, en segundos
+ * @param tEsp tiempo de espiracion, en segundos
+ * @param tCiclo tiempo de ciclo, en segundos
+ * @param pasosPorRevolucion TODO: explicación?
+ * @param microStepper TODO: explicación?
+ * @param porcentajeInspiratorio fraccion del ciclo en la que se inspira, tIns/tCiclo*100
+ * @param rpm respiraciones por minuto
  */
 void calcularCicloInspiratorio(float* velocidadUno, float* velocidadDos,
                                float* tIns, float* tEsp, float* tCiclo,
@@ -80,8 +80,12 @@ void calcularCicloInspiratorio(float* velocidadUno, float* velocidadDos,
   *velocidadDos = (pasosPorRevolucion * microStepper / 2) / *tEsp; // TODO: unidades?
 }
 
+// =========================================================================
+// SETUP
+// =========================================================================
 void setup()
 {
+
   // INICIALIZACION
   // =========================================================================
 
@@ -89,8 +93,8 @@ void setup()
   Serial.begin(9600);
   Serial.println("Inicio");
 
-  // Pantalla de inicio
-  pantalla1.writeLine(0, "REESPIRATOR");
+  // Display de inicio
+  display.writeLine(0, "REESPIRATOR");
 
   // Zumbador
   pinMode(BUZZpin, OUTPUT);
@@ -108,156 +112,147 @@ void setup()
   Serial.println("Setup");
   stepper.setAcceleration(aceleracion);
 
-  // deja la pantalla en blanco
+  // deja la display en blanco
   delay(1000);
-  pantalla1.clear();
+  display.clear();
   delay(100);
 
 
   // INTERACCIÓN: ESTATURA
   // =========================================================================
-  pantalla1.writeLine(0, "Introduce estatura");
-  while(encoder1.leerPulsador() == false) {
-    encoder1.actualizarValor(&estatura);
-    pantalla1.writeLine(1, "Altura: " + String(estatura) + " cm");
+  display.writeLine(0, "Introduce estatura");
+  while(!encoder.readButton()) {
+    encoder.updateValue(&estatura);
+    display.writeLine(1, "Altura: " + String(estatura) + " cm");
   }
-  pantalla1.writeLine(0, "Valor guardado");
-  pantalla1.writeLine(1, "Altura: " + String(estatura) + " cm");
-  Serial.print("Altura (cm): ");
-  Serial.println(estatura);
+  display.writeLine(0, "Valor guardado");
+  display.writeLine(1, "Altura: " + String(estatura) + " cm");
+  Serial.println("Altura (cm): " + String(estatura));
   delay(1000);
 
 
   // INTERACCIÓN: SEXO
   // =========================================================================
-  pantalla1.writeLine(0, "Introduce sexo");
-  while(encoder1.leerPulsador() == false) {
-    encoder1.permutarValor(&sexo);
+  display.writeLine(0, "Introduce sexo");
+  while(!encoder.readButton()) {
+    encoder.swapValue(&sexo);
     if (sexo == 0) {
-      pantalla1.writeLine(1, "Sexo: varón");
+      display.writeLine(1, "Sexo: varón");
     } else if (sexo == 1) {
-      pantalla1.writeLine(1, "Sexo: mujer");
+      display.writeLine(1, "Sexo: mujer");
     }
   }
-  pantalla1.writeLine(0, "Sexo seleccionado");
+  display.writeLine(0, "Sexo seleccionado");
   if (sexo == 0) {
-    pantalla1.writeLine(1, "Sexo: varón");
+    display.writeLine(1, "Sexo: varón");
   } else if (sexo == 1) {
-    pantalla1.writeLine(1, "Sexo: mujer");
+    display.writeLine(1, "Sexo: mujer");
   }
-  Serial.print("Sexo (0:V, 1:M): ");
-  Serial.println(sexo);
+  Serial.println("Sexo (0:V, 1:M): " + String(sexo));
   delay(1000);
 
 
   // ESTIMACIÓN: VOLUMEN TIDAL
   // =========================================================================
-  pantalla1.writeLine(0, "Volumen tidal");
+  display.writeLine(0, "Volumen tidal");
   // TODO: calcular volumen tidal estimado en función de la estatura
   calcularVolumenTidal(&volumenTidal, estatura, sexo);
-  pantalla1.writeLine(1, String(volumenTidal) + " ml");
-  Serial.print("Volumen tidal estimado (ml): ");
-  Serial.println(volumenTidal);
+  display.writeLine(1, String(volumenTidal) + " ml");
+  Serial.println("Volumen tidal estimado (ml): " + String(volumenTidal));
   delay(2000);
 
 
   // INTERACCIÓN: VOLUMEN TIDAL
   // =========================================================================
-  pantalla1.writeLine(0, "Modifica volumen");
-  while(encoder1.leerPulsador() == false) {
-    encoder1.actualizarValor(&volumenTidal);
+  display.writeLine(0, "Modifica volumen");
+  while(!encoder.readButton()) {
+    encoder.updateValue(&volumenTidal);
     volumenTidal = constrain(volumenTidal, DEFAULT_MIN_VOLUMEN_TIDAL, DEFAULT_MAX_VOLUMEN_TIDAL);
-    pantalla1.writeLine(1, String(volumenTidal) + " ml");
+    display.writeLine(1, String(volumenTidal) + " ml");
   }
-  pantalla1.writeLine(0, "Valor guardado");
-  pantalla1.writeLine(1, String(volumenTidal) + " ml");
-  Serial.print("Volumen tidal configurado (ml): ");
-  Serial.println(volumenTidal);
+  display.writeLine(0, "Valor guardado");
+  display.writeLine(1, String(volumenTidal) + " ml");
+  Serial.println("Volumen tidal configurado (ml): " + String(volumenTidal));
   delay(1000);
 
 
   // INTERACCIÓN: TRIGGER SI/NO
   // =========================================================================
-  pantalla1.writeLine(0, "Trigger?");
-  while(encoder1.leerPulsador() == false) {
-    encoder1.permutarValor(&tieneTrigger);
+  display.writeLine(0, "Trigger?");
+  while(!encoder.readButton()) {
+    encoder.swapValue(&tieneTrigger);
     if (tieneTrigger) {
-      pantalla1.writeLine(1, "Sí");
+      display.writeLine(1, "Sí");
     } else {
-      pantalla1.writeLine(1, "No");
+      display.writeLine(1, "No");
     }
   }
-  pantalla1.writeLine(0, "Valor guardado");
+  display.writeLine(0, "Valor guardado");
   if (tieneTrigger) {
-    pantalla1.writeLine(1, "Trigger: Si");
+    display.writeLine(1, "Trigger: Si");
   } else {
-    pantalla1.writeLine(1, "Trigger: No");
+    display.writeLine(1, "Trigger: No");
   }
-  Serial.print("Trigger (0:No, 1:Sí): ");
-  Serial.println(tieneTrigger);
+  Serial.println("Trigger (0:No, 1:Sí): " + String(tieneTrigger));
   delay(1000);
 
 
   // INTERACCIÓN: VALOR DEL TRIGGER
   // =========================================================================
   if (tieneTrigger) {
-    pantalla1.writeLine(0, "Modifica trigger");
-    while(encoder1.leerPulsador() == false) {
-      encoder1.actualizarValor(&flujoTrigger, 0.1);
-      pantalla1.writeLine(1, "Flujo: " + String(flujoTrigger) + " LPM");
+    display.writeLine(0, "Modifica trigger");
+    while(!encoder.readButton()) {
+      encoder.updateValue(&flujoTrigger, 0.1);
+      display.writeLine(1, "Flujo: " + String(flujoTrigger) + " LPM");
     }
-    pantalla1.writeLine(0, "Valor guardado");
-    pantalla1.writeLine(1, "Flujo: " + String(flujoTrigger) + " LPM");
-    Serial.print("Flujo trigger (LPM): ");
-    Serial.println(flujoTrigger);
+    display.writeLine(0, "Valor guardado");
+    display.writeLine(1, "Flujo: " + String(flujoTrigger) + " LPM");
+    Serial.println("Flujo trigger (LPM): " + String(flujoTrigger));
     delay(1000);
   }
 
 
   // INTERACCIÓN: FRECUENCIA RESPIRATORIA
   // =========================================================================
-  pantalla1.writeLine(0, "Frecuencia resp.");
-  while(encoder1.leerPulsador() == false) {
-    encoder1.actualizarValor(&rpm);
+  display.writeLine(0, "Frecuencia resp.");
+  while(!encoder.readButton()) {
+    encoder.updateValue(&rpm);
     rpm = constrain(rpm, DEFAULT_MIN_RPM, DEFAULT_MAX_RPM);
-    pantalla1.writeLine(1, String(rpm) + " rpm");
+    display.writeLine(1, String(rpm) + " rpm");
   }
-  pantalla1.writeLine(0, "Valor guardado");
-  pantalla1.writeLine(1, String(rpm) + " rpm");
-  Serial.print("Frecuencia respiratoria (rpm): ");
-  Serial.println(rpm);
+  display.writeLine(0, "Valor guardado");
+  display.writeLine(1, String(rpm) + " rpm");
+  Serial.println("Frecuencia respiratoria (rpm): " + String(rpm));
   delay(1000);
 
 
   // CÁLCULO: CONSTANTES DE TIEMPO INSPIRACION/ESPIRACION
   // =========================================================================
-  pantalla1.writeLine(0, "Tins | Texp (seg)");
+  display.writeLine(0, "Tins | Tesp (seg)");
   calcularCicloInspiratorio(&velocidadUno, &velocidadDos, &tIns, &tEsp,
                             &tCiclo, pasosPorRevolucion, microStepper,
                             porcentajeInspiratorio, rpm);
-  pantalla1.writeLine(1, String(tIns) + " s" + String(tEsp) + " s");
-  Serial.print("Tiempo del ciclo (seg):");
-  Serial.println(tCiclo);
-  Serial.print("Tiempo inspiratorio (seg):");
-  Serial.println(tIns);
-  Serial.print("Tiempo espiratorio (seg):");
-  Serial.println(tEsp);
-  Serial.print("Velocidad 1 calculada:");
-  Serial.println(velocidadUno);
-  Serial.print("Velocidad 2 calculada:");
-  Serial.println(velocidadDos);
+  display.writeLine(1, String(tIns) + " s" + String(tEsp) + " s");
+  Serial.println("Tiempo del ciclo (seg):" + String(tCiclo));
+  Serial.println("Tiempo inspiratorio (seg):" + String(tIns));
+  Serial.println("Tiempo espiratorio (seg):" + String(tEsp));
+  Serial.println("Velocidad 1 calculada:" + String(velocidadUno));
+  Serial.println("Velocidad 2 calculada:" + String(velocidadDos));
   delay(2000);
 
   // TODO: Mostrar todos los parametros
 
   // INTERACCIÓN: ARRANQUE
   // =========================================================================
-  pantalla1.writeLine(0, "Pulsa para iniciar");
-  pantalla1.writeLine(1, "Esperando...");
-  while(encoder1.leerPulsador() == false);
+  display.writeLine(0, "Pulsa para iniciar");
+  display.writeLine(1, "Esperando...");
+  while(!encoder.readButton());
+  display.clear();
+  display.writeLine(1, "Iniciando...");
 
   // Habilita el motor
   digitalWrite(ENpin, HIGH);
+  delay(500);
 }
 
 
@@ -280,7 +275,7 @@ void loop()
   // Si está en expiración: soltar balón (mover leva hacia arriba sin controlar) y esperar
 
   // Parte menu
-  pantalla1.update(encoder1.leerEncoder());
+  display.update(encoder.read());
 
   // Parte stepper
   stepper.run();

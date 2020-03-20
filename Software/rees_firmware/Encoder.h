@@ -6,13 +6,13 @@
 class Encoder
 {
 public:
-  Encoder(int A, int B, int pulsador);
-  bool leerPulsador();
-  void permutarValor(int* valor);
-  void permutarValor(bool* valor);
-  void actualizarValor(int* valor, int delta = 1);
-  void actualizarValor(float* valor, float delta = 1.0);
-  int leerEncoder();
+  Encoder(int pin1, int pin2, int pulsador);
+  int read();
+  bool readButton();
+  void swapValue(int* valor);
+  void swapValue(bool* valor);
+  void updateValue(int* valor, int delta = 1);
+  void updateValue(float* valor, float delta = 1.0);
   long getPosition();
   int getDirection(); //0 = No rotation, 1 = Clockwise, -1 = Counter Clockwise
   void setPosition(long newPosition);
