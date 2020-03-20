@@ -129,6 +129,7 @@ void setup()
   display.writeLine(1, "Altura: " + String(estatura) + " cm");
   Serial.println("Altura (cm): " + String(estatura));
   delay(1000);
+  display.clear();
 
 
   // INTERACCIÓN: SEXO
@@ -137,19 +138,20 @@ void setup()
   while(!encoder.readButton()) {
     encoder.swapValue(&sexo);
     if (sexo == 0) {
-      display.writeLine(1, "Sexo: varón");
+      display.writeLine(1, "Sexo: varon");
     } else if (sexo == 1) {
       display.writeLine(1, "Sexo: mujer");
     }
   }
   display.writeLine(0, "Sexo seleccionado");
   if (sexo == 0) {
-    display.writeLine(1, "Sexo: varón");
+    display.writeLine(1, "Sexo: varon");
   } else if (sexo == 1) {
     display.writeLine(1, "Sexo: mujer");
   }
   Serial.println("Sexo (0:V, 1:M): " + String(sexo));
   delay(1000);
+  display.clear();
 
 
   // ESTIMACIÓN: VOLUMEN TIDAL
@@ -160,6 +162,7 @@ void setup()
   display.writeLine(1, String(volumenTidal) + " ml");
   Serial.println("Volumen tidal estimado (ml): " + String(volumenTidal));
   delay(2000);
+  display.clear();
 
 
   // INTERACCIÓN: VOLUMEN TIDAL
@@ -174,6 +177,7 @@ void setup()
   display.writeLine(1, String(volumenTidal) + " ml");
   Serial.println("Volumen tidal configurado (ml): " + String(volumenTidal));
   delay(1000);
+  display.clear();
 
 
   // INTERACCIÓN: TRIGGER SI/NO
@@ -182,7 +186,7 @@ void setup()
   while(!encoder.readButton()) {
     encoder.swapValue(&tieneTrigger);
     if (tieneTrigger) {
-      display.writeLine(1, "Sí");
+      display.writeLine(1, "Si");
     } else {
       display.writeLine(1, "No");
     }
@@ -193,8 +197,9 @@ void setup()
   } else {
     display.writeLine(1, "Trigger: No");
   }
-  Serial.println("Trigger (0:No, 1:Sí): " + String(tieneTrigger));
+  Serial.println("Trigger (0:No, 1:Si): " + String(tieneTrigger));
   delay(1000);
+  display.clear();
 
 
   // INTERACCIÓN: VALOR DEL TRIGGER
@@ -209,6 +214,7 @@ void setup()
     display.writeLine(1, "Flujo: " + String(flujoTrigger) + " LPM");
     Serial.println("Flujo trigger (LPM): " + String(flujoTrigger));
     delay(1000);
+    display.clear();
   }
 
 
@@ -224,6 +230,7 @@ void setup()
   display.writeLine(1, String(rpm) + " rpm");
   Serial.println("Frecuencia respiratoria (rpm): " + String(rpm));
   delay(1000);
+  display.clear();
 
 
   // CÁLCULO: CONSTANTES DE TIEMPO INSPIRACION/ESPIRACION
@@ -239,6 +246,7 @@ void setup()
   Serial.println("Velocidad 1 calculada:" + String(velocidadUno));
   Serial.println("Velocidad 2 calculada:" + String(velocidadDos));
   delay(2000);
+  display.clear();
 
   // TODO: Mostrar todos los parametros
 
@@ -253,6 +261,7 @@ void setup()
   // Habilita el motor
   digitalWrite(ENpin, HIGH);
   delay(500);
+  display.clear();
 }
 
 
@@ -272,10 +281,15 @@ void loop()
 
   // Si está en inspiración: controlar con PID el volumen tidal (el que se insufla)
 
-  // Si está en expiración: soltar balón (mover leva hacia arriba sin controlar) y esperar
+  // Si está en espiración: soltar balón (mover leva hacia arriba sin controlar) y esperar
+
+
+  // ======================================================================
+  // CÓDIGO OBSOLETO DE AQUÍ PARA ABAJO
+  // ======================================================================
 
   // Parte menu
-  display.update(encoder.read());
+  // display.update(encoder.read());
 
   // Parte stepper
   stepper.run();
@@ -283,8 +297,8 @@ void loop()
   //recalcular valores por si han cambiado en el menu
   // TODO: sustituir por nueva funcion: calcularConstantes();
 
-  if (!stepper.isRunning() && modo && !errorFC) // Primera mitad del ciclo
-  {
+  // Primera mitad del ciclo
+  if (!stepper.isRunning() && modo && !errorFC) {
     Serial.println("Modo 1");
     stepper.setMaxSpeed(velocidadUno * microStepper);
 
@@ -292,20 +306,19 @@ void loop()
     modo = !modo;
   }
 
-  if (!stepper.isRunning() && !modo && !errorFC) // segunda mitad del ciclo
-  {
+  // Segunda mitad del ciclo
+  if (!stepper.isRunning() && !modo && !errorFC) {
     Serial.println("Modo 2");
 
-    if (digitalRead(ENDSTOPpin)) //se ha llegado al final de carrera en el momento que toca pensar que esta defino como pullup
-    {
+    //se ha llegado al final de carrera en el momento que toca pensar que esta defino como pullup
+    if (digitalRead(ENDSTOPpin)) {
       Serial.println("Final de carrera OK");
       stepper.setMaxSpeed(velocidadDos * microStepper);
       stepper.move(pasosPorRevolucion * microStepper / 2);
       modo = !modo;
     }
-
-    else // si acabada la segunda parte del movimiento no se ha llegado al SENSOR HALL entonces da un paso y vuelve a hacer la comprovocacion
-    {
+    // si acabada la segunda parte del movimiento no se ha llegado al SENSOR HALL entonces da un paso y vuelve a hacer la comprovocacion
+    else {
       Serial.println("Final de carrera NO DETECTADO: Buscando FC");
       errorFC = true;
       digitalWrite(BUZZpin, true); //activa el zumbador
@@ -313,16 +326,16 @@ void loop()
     }
   }
 
-  if (!stepper.isRunning() && errorFC) //si estamos en error y ha echo los pasos extra en busca del Final de Carrera
-  {
-    if (!digitalRead(ENDSTOPpin)) //no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC
-    {
+  //si estamos en error y ha echo los pasos extra en busca del Final de Carrera
+  if (!stepper.isRunning() && errorFC) {
+    // no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC
+    if (!digitalRead(ENDSTOPpin)) {
       Serial.println("--Buscando FC");
       errorFC = true;
       stepper.move(1);
     }
-    else // cuando lo ha localizado ordena seguir con velocidad 2
-    {
+    // cuando lo ha localizado ordena seguir con velocidad 2
+    else {
       Serial.println("Detectado FC: restableciendo el origen");
       errorFC = false;
       digitalWrite(BUZZpin, false); //apaga el zumbador
@@ -331,19 +344,17 @@ void loop()
       modo = !modo; //cambiamos de velocidad
     }
   }
-
-
-else if (!stepper.isRunning() && errorFC) // si hay un error pero ha hecho los 100 pasos extra en busca del Final de Carrera
-  {
-    if (digitalRead(ENDSTOPpin)) // no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC
-    {
+  // si hay un error pero ha hecho los 100 pasos extra en busca del Final de Carrera
+  else if (!stepper.isRunning() && errorFC) {
+    // no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC
+    if (digitalRead(ENDSTOPpin)) {
       errorFC = true;
       stepper.move(1);
       digitalWrite(BUZZpin, true);
       Serial.println("ZUMBA");
     }
-    else // cuando lo ha localizado ordena seguir con velocidad 2
-    {
+    // cuando lo ha localizado ordena seguir con velocidad 2
+    else {
       errorFC = false;
       digitalWrite(BUZZpin, false);
       stepper.setMaxSpeed(velocidadDos);
