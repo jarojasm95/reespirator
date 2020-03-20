@@ -169,7 +169,7 @@ void setup()
   // =========================================================================
   display.writeLine(0, "Modifica volumen");
   while(!encoder.readButton()) {
-    encoder.updateValue(&volumenTidal);
+    encoder.updateValue(&volumenTidal, 10);
     volumenTidal = constrain(volumenTidal, DEFAULT_MIN_VOLUMEN_TIDAL, DEFAULT_MAX_VOLUMEN_TIDAL);
     display.writeLine(1, String(volumenTidal) + " ml");
   }
