@@ -18,7 +18,7 @@ float flujoTrigger         = DEFAULT_FLUJO_TRIGGER;
 
 bool tieneTrigger;
 bool modo = true, errorFC = false;
-float volumenTidal;
+int volumenTidal;
 float velocidadUno, velocidadDos, tCiclo, tIns, tEsp;
 
 // pines en pinout.h
@@ -41,7 +41,7 @@ Display display = Display();
  * @param sexo 0: varón, 1: mujer, sexo del paciente
  * @return *volumenTidal volumen tidal estimado, en mililitros
  */
-void calcularVolumenTidal(float* volumenTidal, int estatura, int sexo) {
+void calcularVolumenTidal(int* volumenTidal, int estatura, int sexo) {
   float peso0, pesoIdeal, volumenEstimado;
   if (sexo == 0) { // Varón
     peso0 = 50.0;
@@ -50,7 +50,7 @@ void calcularVolumenTidal(float* volumenTidal, int estatura, int sexo) {
   }
   pesoIdeal = peso0 + 0.91 * (estatura - 152.4); // en kg
 
-  *volumenTidal = pesoIdeal * DEFAULT_ML_POR_KG_DE_PESO_IDEAL;
+  *volumenTidal = int(round(pesoIdeal * DEFAULT_ML_POR_KG_DE_PESO_IDEAL));
 }
 
 /**
