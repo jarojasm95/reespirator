@@ -29,8 +29,8 @@ void calcularVolumenTidal(int* volumenTidal, int estatura, int sexo) {
  *
  * Calcula a partir de las respiraciones por minuto, los tiempos de ciclo,
  * inspiratorio y espiratorio, y las velocidades uno y dos.
- * @param velocidadUno TODO: explicación?
- * @param velocidadDos TODO: explicación?
+ * @param speedIns TODO: explicación?
+ * @param speedEsp TODO: explicación?
  * @param tIns tiempo de inspiracion, en segundos
  * @param tEsp tiempo de espiracion, en segundos
  * @param tCiclo tiempo de ciclo, en segundos
@@ -39,7 +39,7 @@ void calcularVolumenTidal(int* volumenTidal, int estatura, int sexo) {
  * @param porcentajeInspiratorio fraccion del ciclo en la que se inspira, tIns/tCiclo*100
  * @param rpm respiraciones por minuto
  */
-void calcularCicloInspiratorio(float* velocidadUno, float* velocidadDos,
+void calcularCicloInspiratorio(float* speedIns, float* speedEsp,
                                float* tIns, float* tEsp, float* tCiclo,
                                int pasosPorRevolucion, int microStepper,
                                int porcentajeInspiratorio, int rpm) {
@@ -47,8 +47,8 @@ void calcularCicloInspiratorio(float* velocidadUno, float* velocidadDos,
   *tIns = *tCiclo * porcentajeInspiratorio/100;
   *tEsp = *tCiclo - *tIns;
 
-  *velocidadUno = (pasosPorRevolucion * microStepper / 2) / *tIns; // TODO: unidades?
-  *velocidadDos = (pasosPorRevolucion * microStepper / 2) / *tEsp; // TODO: unidades?
+  *speedIns = (pasosPorRevolucion * microStepper / 2) / *tIns; // TODO: unidades?
+  *speedEsp = (pasosPorRevolucion * microStepper / 2) / *tEsp; // TODO: unidades?
 }
 
 #endif // UTILS_H

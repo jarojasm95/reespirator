@@ -7,6 +7,7 @@
 #include "pinout.h"
 #include "Display.h"
 #include "Encoder.h"
+#include "MechVentilation.h"
 #include "src/AccelStepper/AccelStepper.h"
 
 // =========================================================================
@@ -25,13 +26,21 @@ float flujoTrigger         = DEFAULT_FLUJO_TRIGGER;
 bool tieneTrigger;
 bool modo = true, errorFC = false;
 int volumenTidal;
-float velocidadUno, velocidadDos, tCiclo, tIns, tEsp;
+float speedIns, speedEsp, tCiclo, tIns, tEsp;
 
 // pines en pinout.h
-AccelStepper stepper(AccelStepper::DRIVER, DIRpin, PULpin); // direction Digital 6 (CW), pulses Digital 7 (CLK)
-Encoder encoder(DTpin, CLKpin, SWpin);
+AccelStepper stepper(
+  AccelStepper::DRIVER,
+  DIRpin,
+  PULpin
+); // direction Digital 6 (CW), pulses Digital 7 (CLK)
+Encoder encoder(
+  DTpin,
+  CLKpin,
+  SWpin
+);
 Display display = Display();
-
+MechVentilation ventilation;
 
 // =========================================================================
 // SETUP
@@ -190,15 +199,15 @@ void setup()
   // CÁLCULO: CONSTANTES DE TIEMPO INSPIRACION/ESPIRACION
   // =========================================================================
   display.writeLine(0, "Tins | Tesp (seg)");
-  calcularCicloInspiratorio(&velocidadUno, &velocidadDos, &tIns, &tEsp,
+  calcularCicloInspiratorio(&speedIns, &speedEsp, &tIns, &tEsp,
                             &tCiclo, pasosPorRevolucion, microStepper,
                             porcentajeInspiratorio, rpm);
   display.writeLine(1, String(tIns) + " s" + String(tEsp) + " s");
   Serial.println("Tiempo del ciclo (seg):" + String(tCiclo));
   Serial.println("Tiempo inspiratorio (seg):" + String(tIns));
   Serial.println("Tiempo espiratorio (seg):" + String(tEsp));
-  Serial.println("Velocidad 1 calculada:" + String(velocidadUno));
-  Serial.println("Velocidad 2 calculada:" + String(velocidadDos));
+  Serial.println("Velocidad 1 calculada:" + String(speedIns));
+  Serial.println("Velocidad 2 calculada:" + String(speedEsp));
   delay(2000);
   display.clear();
 
@@ -223,6 +232,14 @@ void setup()
 
   // Habilita el motor
   digitalWrite(ENpin, HIGH);
+
+  // configura la ventilación
+  if (tieneTrigger) {
+    ventilation = MechVentilation(volumenTidal, tIns, tEsp, speedIns, speedEsp, flujoTrigger);
+  } else {
+    ventilation = MechVentilation(volumenTidal, tIns, tEsp, speedIns, speedEsp);
+  }
+  ventilation.start();
   delay(500);
   display.clear();
 }
@@ -231,12 +248,13 @@ void setup()
 // LOOP
 // =========================================================================
 
-void loop()
-{
-  // TODO: Mostrar todos los parametros y el estado
+void loop() {
+  display.writeLine(0, "Operando...");
+  // TODO: display.writeLine(1, "TODO Prompt ventilation status");
+  ventilation.update();
 
-  // TODO: Escuchar entrada desde el encoder
-  // si hay nueva configuración: cambiar parámetros
+
+  // TODO: si hay nueva configuración: cambiar parámetros escuchando entrada desde el encoder
 
 
   // TODO: chequear trigger
@@ -264,7 +282,7 @@ void loop()
   // Primera mitad del ciclo
   if (!stepper.isRunning() && modo && !errorFC) {
     Serial.println("Modo 1");
-    stepper.setMaxSpeed(velocidadUno * microStepper);
+    stepper.setMaxSpeed(speedIns * microStepper);
 
     stepper.move(pasosPorRevolucion * microStepper / 2);
     modo = !modo;
@@ -277,7 +295,7 @@ void loop()
     //se ha llegado al final de carrera en el momento que toca pensar que esta defino como pullup
     if (digitalRead(ENDSTOPpin)) {
       Serial.println("Final de carrera OK");
-      stepper.setMaxSpeed(velocidadDos * microStepper);
+      stepper.setMaxSpeed(speedEsp * microStepper);
       stepper.move(pasosPorRevolucion * microStepper / 2);
       modo = !modo;
     }
@@ -290,7 +308,7 @@ void loop()
     }
   }
 
-  //si estamos en error y ha echo los pasos extra en busca del Final de Carrera
+  //si estamos en error y ha hecho los pasos extra en busca del Final de Carrera
   if (!stepper.isRunning() && errorFC) {
     // no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC
     if (!digitalRead(ENDSTOPpin)) {
@@ -303,7 +321,7 @@ void loop()
       Serial.println("Detectado FC: restableciendo el origen");
       errorFC = false;
       digitalWrite(BUZZpin, false); //apaga el zumbador
-      stepper.setMaxSpeed(velocidadDos * microStepper);
+      stepper.setMaxSpeed(speedEsp * microStepper);
       stepper.move(pasosPorRevolucion * microStepper / 2);
       modo = !modo; //cambiamos de velocidad
     }
@@ -321,7 +339,7 @@ void loop()
     else {
       errorFC = false;
       digitalWrite(BUZZpin, false);
-      stepper.setMaxSpeed(velocidadDos);
+      stepper.setMaxSpeed(speedEsp);
       stepper.move(pasosPorRevolucion / 2);
     }
   }
