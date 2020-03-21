@@ -6,12 +6,19 @@
  * It handles the mechanical ventilation control loop.
  */
 #include <float.h>
+#include "calc.h"
 #include "MechVentilation.h"
+#include "PID.h"
+#include "src/AccelStepper/AccelStepper.h"
 
 /** No trigger. */
 #define LPM_FLUX_TRIGGER_VALUE_NONE     FLT_MAX
 
 MechVentilation::MechVentilation(
+    PID pid,    //TODO Check????
+    AccelStepper stepper,
+    Adafruit_BMP280 bmp1,
+    Adafruit_BMP280 bmp2,
     float mlTidalVolume,
     float secTimeoutInsufflation,
     float secTimeoutExsufflation,
@@ -19,7 +26,10 @@ MechVentilation::MechVentilation(
     float speedExsufflation
 )
 {
-    _init(mlTidalVolume,
+    _init(stepper,
+          bmp1,
+          bmp2,
+          mlTidalVolume,
           secTimeoutInsufflation,
           secTimeoutExsufflation,
           speedInsufflation,
@@ -28,6 +38,10 @@ MechVentilation::MechVentilation(
 }
 
 MechVentilation::MechVentilation(
+    PID pid,    //TODO Check????
+    AccelStepper stepper,
+    Adafruit_BMP280 bmp1,
+    Adafruit_BMP280 bmp2,
     float mlTidalVolume,
     float secTimeoutInsufflation,
     float secTimeoutExsufflation,
@@ -36,7 +50,10 @@ MechVentilation::MechVentilation(
     float lpmFluxTriggerValue
 )
 {
-    _init(mlTidalVolume,
+    _init(stepper,
+          bmp1,
+          bmp2,
+          mlTidalVolume,
           secTimeoutInsufflation,
           secTimeoutExsufflation,
           speedInsufflation,
@@ -111,6 +128,19 @@ void MechVentilation::update(void) {
             case State_Insufflation : {
                 if(_secTimerCnt < _secTimeoutInsufflation) {
                     /* @todo Keep on the PID work */
+
+                    // Acquire sensors data
+                    _cfgBmp1_pressure->getEvent(&_pressure1Event);
+                    _cfgBmp2_pressure->getEvent(&_pressure2Event);
+                    _pressure1 = _pressure1Event.pressure;
+                    _pressure2 = _pressure2Event.pressure;
+
+                    // Calculate flux from delta pressure
+                    // TODO: Check sign of results!
+                    calcularCaudal(&_pressure1, &_pressure2, &_flux);
+
+                    // TODO: Control stepper velocity from flux
+
                 } else {
                     /* Insufflation timeout expired */
                     _secTimerCnt = 0;
@@ -149,7 +179,10 @@ void MechVentilation::update(void) {
             case State_Shutdown : {
                 /* @todo Shutdown in a safe way!!! */
 
-                _init(_cfgmlTidalVolume,
+                _init(_cfgStepper,
+                      _cfgBmp1,
+                      _cfgBmp2,
+                      _cfgmlTidalVolume,
                       _cfgSecTimeoutInsufflation,
                       _cfgSecTimeoutExsufflation,
                       _cfgSpeedInsufflation,
@@ -171,6 +204,9 @@ void MechVentilation::update(void) {
 }
 
 void MechVentilation::_init(
+    AccelStepper stepper,
+    Adafruit_BMP280 bmp1,
+    Adafruit_BMP280 bmp2,
     float mlTidalVolume,
     float secTimeoutInsufflation,
     float secTimeoutExsufflation,
@@ -180,6 +216,9 @@ void MechVentilation::_init(
 )
 {
     /* Set configuration parameters */
+    _cfgStepper                 = stepper;
+    _cfgBmp1                    = bmp1;
+    _cfgBmp2                    = bmp2;
     _cfgmlTidalVolume           = mlTidalVolume;
     _cfgSecTimeoutInsufflation  = secTimeoutInsufflation;
     _cfgSecTimeoutExsufflation  = secTimeoutExsufflation;

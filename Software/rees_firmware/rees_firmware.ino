@@ -3,7 +3,7 @@
 // =========================================================================
 
 #include "defaults.h"
-#include "utils.h"
+#include "calc.h"
 #include "pinout.h"
 #include "Display.h"
 #include "Encoder.h"
@@ -42,6 +42,20 @@ Encoder encoder(
 Display display = Display();
 MechVentilation ventilation;
 
+Adafruit_BMP280 bmp1(
+  BMP_CS1,
+  BMP_MOSI,
+  BMP_MISO,
+  BMP_SCK
+);
+
+Adafruit_BMP280 bmp2(
+  BMP_CS2,
+  BMP_MOSI,
+  BMP_MISO,
+  BMP_SCK
+);
+
 // =========================================================================
 // SETUP
 // =========================================================================
@@ -67,6 +81,31 @@ void setup()
 
   // FC efecto hall
   pinMode(ENDSTOPpin, INPUT); // el sensor de efecto hall da un 1 cuando detecta
+
+  // Arrancar sensores de presion 1 y 2
+  if (!bmp1.begin() || !bmp2.begin()) {
+    display.clear();
+    if(!bmp1.begin()) {
+      display.writeLine(0, "bmp1 not found");
+      Serial.println("Could not find sensor BMP280 number 1, check wiring!");
+    } else {
+      display.writeLine(0, "bmp2 not found");
+      Serial.println("Could not find sensor BMP280 number 2, check wiring!");
+    }
+    display.writeLine(1, "Check wires!");
+    while (1);
+  }
+  /* Default settings from datasheet. */
+  bmp1.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                   Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                   Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                   Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                   Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+  bmp2.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                   Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                   Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                   Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                   Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
 
   // Parte motor
   pinMode(ENpin, OUTPUT);
@@ -235,9 +274,9 @@ void setup()
 
   // configura la ventilación
   if (tieneTrigger) {
-    ventilation = MechVentilation(volumenTidal, tIns, tEsp, speedIns, speedEsp, flujoTrigger);
+    ventilation = MechVentilation(stepper, bmp1, bmp2, volumenTidal, tIns, tEsp, speedIns, speedEsp, flujoTrigger);
   } else {
-    ventilation = MechVentilation(volumenTidal, tIns, tEsp, speedIns, speedEsp);
+    ventilation = MechVentilation(stepper, bmp1, bmp2, volumenTidal, tIns, tEsp, speedIns, speedEsp);
   }
   ventilation.start();
   delay(500);

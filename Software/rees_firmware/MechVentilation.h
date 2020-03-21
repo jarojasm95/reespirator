@@ -9,7 +9,9 @@
 #define INC_MECHANICAL_VENTILATION_H
 
 #include <inttypes.h>
-#include "PID.h"
+#include "src/AccelStepper/AccelStepper.h"
+#include "src/Adafruit_BMP280/Adafruit_BMP280.h"
+
 
 /** States of the mechanical ventilation. */
 enum State {
@@ -39,6 +41,9 @@ public:
      *
 	 */
 	MechVentilation(
+        AccelStepper stepper,
+        Adafruit_BMP280 bmp1,
+        Adafruit_BMP280 bmp2,
         float mlTidalVolume,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
@@ -58,6 +63,9 @@ public:
      *
 	 */
 	MechVentilation(
+        AccelStepper stepper,
+        Adafruit_BMP280 bmp1,
+        Adafruit_BMP280 bmp2,
         float mlTidalVolume,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
@@ -67,7 +75,8 @@ public:
     );
 
     /* Setters/getters */
-    /* Set tidal volume */
+    // TODO: Add stepper, bmp1, bmp2 setters
+    /** Set tidal volume */
     void setTidalVolume(float mlTidalVolume);
     /** Set insufflation timeout. */
     void setTimeoutInsufflation(float secTimeoutInsufflation);
@@ -95,6 +104,9 @@ public:
 private:
     /** Generic initialization. */
     void _init(
+        AccelStepper stepper,
+        Adafruit_BMP280 bmp1,
+        Adafruit_BMP280 bmp2,
         float mlTidalVolume,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
@@ -107,6 +119,10 @@ private:
     void _setState(State state);
 
     /* Configuration parameters */
+    AccelStepper    _cfgStepper;
+    Adafruit_BMP280 _cfgBmp1;
+    Adafruit_BMP280 _cfgBmp2;
+
     /** Tidal volume in millilitres. */
     float _cfgmlTidalVolume;
     /** Flux trigger value in litres per minute. */
@@ -128,7 +144,7 @@ private:
     /** Next state. @todo Consider removing. */
     State _nextState;
     /** Timer counter in seconds. */
-    uint8_t _secTimerCnt;
+    uint64_t _secTimerCnt;
     /**  Insufflation timeout in seconds. */
     float _secTimeoutInsufflation;
     /** Exsufflation timeout in seconds. */
@@ -137,6 +153,12 @@ private:
     float _speedInsufflation;
     /** Exsufflation speed. @todo Denote units. */
     float _speedExsufflation;
+    /** Sensors pressure events. */
+    sensors_event_t _pressure1Event, _pressure2Event;
+    /** Sensors pressure in hPa. */
+    float _pressure1, _pressure2;
+    /** Estimated flux accross the bmps. @todo Denote units. */
+    float _flux;
 
     /* @todo PID stuff */
 

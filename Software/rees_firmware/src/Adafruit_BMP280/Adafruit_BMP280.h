@@ -21,7 +21,7 @@
 #ifndef __BMP280_H__
 #define __BMP280_H__
 
-#include "Adafruit_Sensor.h"
+#include "../Adafruit_Sensor/Adafruit_Sensor.h"
 #include "Arduino.h"
 #include <SPI.h>
 #include <Wire.h>

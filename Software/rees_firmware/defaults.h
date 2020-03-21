@@ -20,5 +20,6 @@
 #define DEFAULT_MIN_RPM 14
 #define DEFAULT_POR_INSPIRATORIO 60
 
+#define DEFAULT_PRESSURE_V_FLUX_K1 1   //Constante proporcional que relaciona presión con caudal
 
 #endif // DEFAULTS_H

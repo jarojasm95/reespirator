@@ -1,9 +1,11 @@
+/** Calculation functions
+ *
+ * @file calc.h
+ *
+ *
+ */
 #ifndef CALC_H
 #define CALC_H
-
-// =========================================================================
-// FUNCIONES DE CÁLCULO
-// =========================================================================
 
 /**
  * @brief estima el volumen tidal en función de estatura y sexo, en ml.
