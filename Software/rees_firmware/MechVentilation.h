@@ -11,7 +11,7 @@
 #include <inttypes.h>
 #include "PID.h"
 
-/** States of the mechanical ventilation. */
+ /** States of the mechanical ventilation. */
 enum State {
     State_Init = 0,               /**< Initializing. */
     State_Idle = 1,               /**< Idle. */
@@ -28,17 +28,22 @@ enum State {
  */
 class MechVentilation {
 public:
-	/**
-	 * Constructor (no trigger).
-	 *
+    /**
+     * Constructor.
+     */
+    MechVentilation();
+
+    /**
+     * Constructor (no trigger).
+     *
      * @param[in]   mlTidalVolume             Tidal volume in millilitres.
-	 * @param[in]   secTimeoutInsufflation    Insufflation timeout in seconds.
-	 * @param[in]   secTimeoutExsufflation    Exsufflation timeout in seconds.
+     * @param[in]   secTimeoutInsufflation    Insufflation timeout in seconds.
+     * @param[in]   secTimeoutExsufflation    Exsufflation timeout in seconds.
      * @param[in]   speedInsufflation         Insufflation speed. @todo Denote units.
      * @param[in]   speedExsufflation         Exsufflation speed. @todo Denote units.
      *
-	 */
-	MechVentilation(
+     */
+    MechVentilation(
         float mlTidalVolume,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
@@ -47,17 +52,17 @@ public:
     );
 
     /**
-	 * Constructor (triggered mechanical ventilation).
-	 *
+     * Constructor (triggered mechanical ventilation).
+     *
      * @param[in]   mlTidalVolume             Tidal volume in millilitres.
-	 * @param[in]   secTimeoutInsufflation    Insufflation timeout in seconds.
-	 * @param[in]   secTimeoutExsufflation    Exsufflation timeout in seconds.
+     * @param[in]   secTimeoutInsufflation    Insufflation timeout in seconds.
+     * @param[in]   secTimeoutExsufflation    Exsufflation timeout in seconds.
      * @param[in]   speedInsufflation         Insufflation speed. @todo Denote units.
      * @param[in]   speedExsufflation         Exsufflation speed. @todo Denote units.
      * @param[in]   lpmFluxTriggerValue       Flux trigger value in Litres Per Minute.
      *
-	 */
-	MechVentilation(
+     */
+    MechVentilation(
         float mlTidalVolume,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,

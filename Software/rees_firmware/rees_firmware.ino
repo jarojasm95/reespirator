@@ -2,10 +2,12 @@
 // DEPENDENCIAS
 // =========================================================================
 
+#include <EEPROM.h>
 #include "defaults.h"
 #include "utils.h"
 #include "pinout.h"
 #include "Display.h"
+#include "DataEEPROM.h"
 #include "Encoder.h"
 #include "MechVentilation.h"
 #include "src/AccelStepper/AccelStepper.h"
@@ -42,6 +44,12 @@ Encoder encoder(
 Display display = Display();
 MechVentilation ventilation;
 
+
+DataEEPROM data_estatura(50);
+DataEEPROM data_sexo(51);
+VolumenTidalEEPROM data_volumen_tidal(60);
+
+
 // =========================================================================
 // SETUP
 // =========================================================================
@@ -57,13 +65,14 @@ void setup()
   Serial.println("Inicio");
 
   // Display de inicio
+  display.init();
   display.writeLine(0, "REESPIRATOR");
 
   // Zumbador
-  pinMode(BUZZpin, OUTPUT);
-  digitalWrite(BUZZpin, HIGH); // test zumbador
+  pinMode(BUZZpin, OUTPUT); // el sensor de efecto hall da un 1 cuando detecta
+  digitalWrite(BUZZpin, LOW); // test zumadbor
   delay(100);
-  digitalWrite(BUZZpin, LOW);
+  digitalWrite(BUZZpin, HIGH);
 
   // FC efecto hall
   pinMode(ENDSTOPpin, INPUT); // el sensor de efecto hall da un 1 cuando detecta
@@ -81,32 +90,44 @@ void setup()
   delay(100);
 
 
-  // INTERACCIÓN: ESTATURA
-  // =========================================================================
-  display.writeLine(0, "Introduce estatura");
-  while(!encoder.readButton()) {
-    encoder.updateValue(&estatura);
-    display.writeLine(1, "Altura: " + String(estatura) + " cm");
+   //INTERACCIÓN: ESTATURA
+   //=========================================================================
+  if(data_estatura.readData()==255){
+    display.writeLine(0, "Introduce estatura");
+    while(!encoder.readButton()) {
+      encoder.updateValue(&estatura);
+      display.writeLine(1, "Altura: " + String(estatura) + " cm");
+    }
+    data_estatura.writeData(estatura);
+    display.writeLine(0, "Valor guardado");
   }
-  display.writeLine(0, "Valor guardado");
-  display.writeLine(1, "Altura: " + String(estatura) + " cm");
-  Serial.println("Altura (cm): " + String(estatura));
-  delay(1000);
+  else{
+    display.writeLine(0, "Valor memoria:");
+    display.writeLine(1, "Altura: " + String(estatura) + " cm");
+    Serial.println("Altura (cm): " + String(estatura));
+    delay(1000);
+  }
   display.clear();
 
 
   // INTERACCIÓN: SEXO
   // =========================================================================
-  display.writeLine(0, "Introduce sexo");
-  while(!encoder.readButton()) {
-    encoder.swapValue(&sexo);
-    if (sexo == 0) {
-      display.writeLine(1, "Sexo: varon");
-    } else if (sexo == 1) {
-      display.writeLine(1, "Sexo: mujer");
+  if(data_sexo.readData()>1){
+    display.writeLine(0, "Introduce sexo");
+    while(!encoder.readButton()) {
+      encoder.swapValue(&sexo);
+      if (sexo == 0) {
+        display.writeLine(1, "Sexo: varon");
+      } else if (sexo == 1) {
+        display.writeLine(1, "Sexo: mujer");
+      }
     }
+    data_sexo.writeData(sexo);
+    display.writeLine(0, "Sexo seleccionado");
+  }else{
+    display.writeLine(0, "Sexo memoria:");
   }
-  display.writeLine(0, "Sexo seleccionado");
+
   if (sexo == 0) {
     display.writeLine(1, "Sexo: varon");
   } else if (sexo == 1) {
@@ -130,11 +151,17 @@ void setup()
 
   // INTERACCIÓN: VOLUMEN TIDAL
   // =========================================================================
-  display.writeLine(0, "Modifica volumen");
-  while(!encoder.readButton()) {
-    encoder.updateValue(&volumenTidal, 10);
-    volumenTidal = constrain(volumenTidal, DEFAULT_MIN_VOLUMEN_TIDAL, DEFAULT_MAX_VOLUMEN_TIDAL);
-    display.writeLine(1, String(volumenTidal) + " ml");
+
+  if(data_volumen_tidal.isVolumenTidalWritten()){
+    volumenTidal=data_volumen_tidal.readVolumenTidal();
+  }else{
+    display.writeLine(0, "Modifica volumen");
+    while(!encoder.readButton()) {
+      encoder.updateValue(&volumenTidal, 10);
+      volumenTidal = constrain(volumenTidal, DEFAULT_MIN_VOLUMEN_TIDAL, DEFAULT_MAX_VOLUMEN_TIDAL);
+      display.writeLine(1, String(volumenTidal) + " ml");
+    }
+    data_volumen_tidal.writeVolumenTidal(volumenTidal);
   }
   display.writeLine(0, "Valor guardado");
   display.writeLine(1, String(volumenTidal) + " ml");
@@ -231,9 +258,9 @@ void setup()
   display.writeLine(1, "Iniciando...");
 
   // Habilita el motor
-  digitalWrite(ENpin, HIGH);
+  digitalWrite(ENpin, LOW);
 
-  // configura la ventilación
+   //configura la ventilación
   if (tieneTrigger) {
     ventilation = MechVentilation(volumenTidal, tIns, tEsp, speedIns, speedEsp, flujoTrigger);
   } else {
@@ -251,19 +278,19 @@ void setup()
 void loop() {
   display.writeLine(0, "Operando...");
   // TODO: display.writeLine(1, "TODO Prompt ventilation status");
-  ventilation.update();
+  //ventilation.update();
 
 
-  // TODO: si hay nueva configuración: cambiar parámetros escuchando entrada desde el encoder
+  //// TODO: si hay nueva configuración: cambiar parámetros escuchando entrada desde el encoder
 
 
-  // TODO: chequear trigger
-  // si hay trigger, esperar al flujo umbral para actuar, si no, actuar en cada bucle
+  //// TODO: chequear trigger
+  //// si hay trigger, esperar al flujo umbral para actuar, si no, actuar en cada bucle
 
 
-  // Si está en inspiración: controlar con PID el volumen tidal (el que se insufla)
+  //// Si está en inspiración: controlar con PID el volumen tidal (el que se insufla)
 
-  // Si está en espiración: soltar balón (mover leva hacia arriba sin controlar) y esperar
+  //// Si está en espiración: soltar balón (mover leva hacia arriba sin controlar) y esperar
 
 
   // ======================================================================
@@ -271,7 +298,8 @@ void loop() {
   // ======================================================================
 
   // Parte menu
-  // display.update(encoder.read());
+  //encoder.read();
+   //display.update(encoder.read());
 
   // Parte stepper
   stepper.run();
@@ -282,9 +310,17 @@ void loop() {
   // Primera mitad del ciclo
   if (!stepper.isRunning() && modo && !errorFC) {
     Serial.println("Modo 1");
+    Serial.print(speedIns);
+    Serial.print(" ");
+    Serial.print(speedIns);
+    Serial.print("=");
+    Serial.print(speedIns * microStepper);
     stepper.setMaxSpeed(speedIns * microStepper);
-
+    Serial.println("move ");
+    Serial.print(pasosPorRevolucion * microStepper / 2);
     stepper.move(pasosPorRevolucion * microStepper / 2);
+    Serial.println("modo ");
+    Serial.print(modo);
     modo = !modo;
   }
 

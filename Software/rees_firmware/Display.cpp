@@ -2,11 +2,8 @@
 #include "Arduino.h"
 
 Display::Display() {
-#ifdef I2C
-  lcd.begin();
-#else
-  lcd.begin(20, 4);
-#endif
+
+ 
   byte _Flecha[] = {
       B00000,
       B00100,
@@ -26,9 +23,6 @@ Display::Display() {
       B01110,
       B01110,
       B00000};
-  //Creamos el icono flecha
-  lcd.createChar(0, _Flecha);
-  lcd.createChar(1, _Cruz);
 }
 
 /**
@@ -50,4 +44,16 @@ void Display::writeLine(int line, String message, int offsetLeft) {
  */
 void Display::clear() {
   lcd.clear();
+}
+
+void Display::init() {
+    #ifdef I2C
+        lcd.init();
+        lcd.backlight();
+    #else
+        lcd.begin(20, 4);
+    #endif
+    //Creamos el icono flecha
+    //lcd.createChar(0, _Flecha);
+    //lcd.createChar(1, _Cruz);
 }
