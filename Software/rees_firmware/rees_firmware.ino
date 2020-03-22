@@ -33,8 +33,9 @@ float speedIns, speedEsp, tCiclo, tIns, tEsp;
 // pines en pinout.h
 AccelStepper stepper(
   AccelStepper::DRIVER,
-  DIRpin,
-  PULpin
+    PULpin,
+    DIRpin
+  
 ); // direction Digital 6 (CW), pulses Digital 7 (CLK)
 Encoder encoder(
   DTpin,
@@ -42,7 +43,7 @@ Encoder encoder(
   SWpin
 );
 Display display = Display();
-MechVentilation ventilation;
+MechVentilation ventilation(stepper);
 
 
 DataEEPROM data_estatura(50);
@@ -262,9 +263,9 @@ void setup()
 
    //configura la ventilación
   if (tieneTrigger) {
-    ventilation = MechVentilation(volumenTidal, tIns, tEsp, speedIns, speedEsp, flujoTrigger);
+    ventilation = MechVentilation(stepper, volumenTidal, tIns, tEsp, speedIns, speedEsp, flujoTrigger);
   } else {
-    ventilation = MechVentilation(volumenTidal, tIns, tEsp, speedIns, speedEsp);
+    ventilation = MechVentilation(stepper, volumenTidal, tIns, tEsp, speedIns, speedEsp);
   }
   ventilation.start();
   delay(500);
@@ -276,9 +277,12 @@ void setup()
 // =========================================================================
 
 void loop() {
-  display.writeLine(0, "Operando...");
-  // TODO: display.writeLine(1, "TODO Prompt ventilation status");
-  //ventilation.update();
+    display.writeLine(0, "Operando...");
+    // TODO: display.writeLine(1, "TODO Prompt ventilation status");
+    if (!stepper.isRunning()){
+        ventilation.update();
+    }
+    stepper.run();
 
 
   //// TODO: si hay nueva configuración: cambiar parámetros escuchando entrada desde el encoder
@@ -293,90 +297,81 @@ void loop() {
   //// Si está en espiración: soltar balón (mover leva hacia arriba sin controlar) y esperar
 
 
-  // ======================================================================
-  // CÓDIGO OBSOLETO DE AQUÍ PARA ABAJO
-  // ======================================================================
+  //// ======================================================================
+  //// CÓDIGO OBSOLETO DE AQUÍ PARA ABAJO
+  //// ======================================================================
 
-  // Parte menu
-  //encoder.read();
-   //display.update(encoder.read());
+  //// Parte menu
+  ////encoder.read();
+  // //display.update(encoder.read());
 
-  // Parte stepper
-  stepper.run();
+  //// Parte stepper
+  //stepper.run();
 
-  //recalcular valores por si han cambiado en el menu
-  // TODO: sustituir por nueva funcion: calcularConstantes();
+  ////recalcular valores por si han cambiado en el menu
+  //// TODO: sustituir por nueva funcion: calcularConstantes();
 
-  // Primera mitad del ciclo
-  if (!stepper.isRunning() && modo && !errorFC) {
-    Serial.println("Modo 1");
-    Serial.print(speedIns);
-    Serial.print(" ");
-    Serial.print(speedIns);
-    Serial.print("=");
-    Serial.print(speedIns * microStepper);
-    stepper.setMaxSpeed(speedIns * microStepper);
-    Serial.println("move ");
-    Serial.print(pasosPorRevolucion * microStepper / 2);
-    stepper.move(pasosPorRevolucion * microStepper / 2);
-    Serial.println("modo ");
-    Serial.print(modo);
-    modo = !modo;
-  }
+  //// Primera mitad del ciclo
+  //if (!stepper.isRunning() && modo && !errorFC) {
+  //  Serial.println("Modo 1");
+  //  stepper.setMaxSpeed(speedIns * microStepper);
+  //  stepper.move(pasosPorRevolucion * microStepper / 2);
+  //  modo = !modo;
+  //}
 
-  // Segunda mitad del ciclo
-  if (!stepper.isRunning() && !modo && !errorFC) {
-    Serial.println("Modo 2");
+  //// Segunda mitad del ciclo
+  //if (!stepper.isRunning() && !modo && !errorFC) {
+  //  Serial.println("Modo 2");
 
-    //se ha llegado al final de carrera en el momento que toca pensar que esta defino como pullup
-    if (digitalRead(ENDSTOPpin)) {
-      Serial.println("Final de carrera OK");
-      stepper.setMaxSpeed(speedEsp * microStepper);
-      stepper.move(pasosPorRevolucion * microStepper / 2);
-      modo = !modo;
-    }
-    // si acabada la segunda parte del movimiento no se ha llegado al SENSOR HALL entonces da un paso y vuelve a hacer la comprovocacion
-    else {
-      Serial.println("Final de carrera NO DETECTADO: Buscando FC");
-      errorFC = true;
-      digitalWrite(BUZZpin, true); //activa el zumbador
-      stepper.move(1 * microStepper);
-    }
-  }
+    ////se ha llegado al final de carrera en el momento que toca pensar que esta defino como pullup
+    //if (digitalRead(ENDSTOPpin)) {
+    //  Serial.println("Final de carrera OK");
+    //  stepper.setMaxSpeed(speedEsp * microStepper);
+    //  stepper.move(pasosPorRevolucion * microStepper / 2);
+    //  modo = !modo;
+    //}
+    //// si acabada la segunda parte del movimiento no se ha llegado al SENSOR HALL entonces da un paso y vuelve a hacer la comprovocacion
+    //else {
+    //  Serial.println("Final de carrera NO DETECTADO: Buscando FC");
+    //  errorFC = true;
+    //  digitalWrite(BUZZpin, true); //activa el zumbador
+    //  stepper.move(1 * microStepper);
+    //}
+  //}
 
-  //si estamos en error y ha hecho los pasos extra en busca del Final de Carrera
-  if (!stepper.isRunning() && errorFC) {
-    // no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC
-    if (!digitalRead(ENDSTOPpin)) {
-      Serial.println("--Buscando FC");
-      errorFC = true;
-      stepper.move(1);
-    }
-    // cuando lo ha localizado ordena seguir con velocidad 2
-    else {
-      Serial.println("Detectado FC: restableciendo el origen");
-      errorFC = false;
-      digitalWrite(BUZZpin, false); //apaga el zumbador
-      stepper.setMaxSpeed(speedEsp * microStepper);
-      stepper.move(pasosPorRevolucion * microStepper / 2);
-      modo = !modo; //cambiamos de velocidad
-    }
-  }
-  // si hay un error pero ha hecho los 100 pasos extra en busca del Final de Carrera
-  else if (!stepper.isRunning() && errorFC) {
-    // no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC
-    if (digitalRead(ENDSTOPpin)) {
-      errorFC = true;
-      stepper.move(1);
-      digitalWrite(BUZZpin, true);
-      Serial.println("ZUMBA");
-    }
-    // cuando lo ha localizado ordena seguir con velocidad 2
-    else {
-      errorFC = false;
-      digitalWrite(BUZZpin, false);
-      stepper.setMaxSpeed(speedEsp);
-      stepper.move(pasosPorRevolucion / 2);
-    }
-  }
+  ////si estamos en error y ha hecho los pasos extra en busca del Final de Carrera
+  //if (!stepper.isRunning() && errorFC) {
+  //  // no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC
+  //  if (!digitalRead(ENDSTOPpin)) {
+  //    Serial.println("--Buscando FC");
+  //    errorFC = true;
+  //    stepper.move(1);
+  //  }
+  //  // cuando lo ha localizado ordena seguir con velocidad 2
+  //  else {
+  //    Serial.println("Detectado FC: restableciendo el origen");
+  //    errorFC = false;
+  //    digitalWrite(BUZZpin, HIGH); //apaga el zumbador
+  //    stepper.setMaxSpeed(speedEsp * microStepper);
+  //    stepper.move(pasosPorRevolucion * microStepper / 2);
+  //    modo = !modo; //cambiamos de velocidad
+  //  }
+  //}
+  //// si hay un error pero ha hecho los 100 pasos extra en busca del Final de Carrera
+  //else if (!stepper.isRunning() && errorFC) {
+  //  // no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC
+  //  if (digitalRead(ENDSTOPpin)) {
+  //    errorFC = true;
+  //    stepper.move(1);
+  //    digitalWrite(BUZZpin, true);
+  //    Serial.println("ZUMBA");
+  //  }
+  //  // cuando lo ha localizado ordena seguir con velocidad 2
+  //  else {
+  //    errorFC = false;
+  //    digitalWrite(BUZZpin, HIGH);
+  //    stepper.setMaxSpeed(speedEsp);
+  //    stepper.move(pasosPorRevolucion / 2);
+  //  }
+  //}
 }

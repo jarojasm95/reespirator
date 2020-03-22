@@ -10,6 +10,7 @@
 
 #include <inttypes.h>
 #include "PID.h"
+#include "src/AccelStepper/AccelStepper.h"
 
  /** States of the mechanical ventilation. */
 enum State {
@@ -31,7 +32,7 @@ public:
     /**
      * Constructor.
      */
-    MechVentilation();
+    MechVentilation(AccelStepper stepper );
 
     /**
      * Constructor (no trigger).
@@ -44,6 +45,7 @@ public:
      *
      */
     MechVentilation(
+        AccelStepper stepper,
         float mlTidalVolume,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
@@ -63,6 +65,7 @@ public:
      *
      */
     MechVentilation(
+        AccelStepper stepper,
         float mlTidalVolume,
         float secTimeoutInsufflation,
         float secTimeoutExsufflation,
@@ -144,6 +147,7 @@ private:
     float _speedExsufflation;
 
     /* @todo PID stuff */
+    AccelStepper stepper;
 
 };
 

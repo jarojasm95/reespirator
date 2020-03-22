@@ -7,15 +7,17 @@
  */
 #include <float.h>
 #include "MechVentilation.h"
+#include "src\AccelStepper\AccelStepper.h"
 
 /** No trigger. */
 #define LPM_FLUX_TRIGGER_VALUE_NONE     FLT_MAX
 
-MechVentilation::MechVentilation()
+MechVentilation::MechVentilation(AccelStepper stepper)
 {
 }
 
 MechVentilation::MechVentilation(
+    AccelStepper stepper,
     float mlTidalVolume,
     float secTimeoutInsufflation,
     float secTimeoutExsufflation,
@@ -32,6 +34,7 @@ MechVentilation::MechVentilation(
 }
 
 MechVentilation::MechVentilation(
+    AccelStepper stepper,
     float mlTidalVolume,
     float secTimeoutInsufflation,
     float secTimeoutExsufflation,
@@ -107,6 +110,8 @@ void MechVentilation::update(void) {
 
                 /* @todo start PID stuff? */
                 _setState(State_Insufflation);
+                stepper.setMaxSpeed(_speedInsufflation);
+                stepper.move(200);
                 /* Step directly into next case */
                 bContinue = true;
             }
@@ -127,6 +132,8 @@ void MechVentilation::update(void) {
 
             case State_StopInsufflation : {
                 /* @todo Stop PID stuff? */
+                stepper.setMaxSpeed(0);
+                stepper.move(0);
                 /* @todo Start exsufflation timer */
                 _setState(State_WaitExsufflation);
                 /* Step directly into next case */
