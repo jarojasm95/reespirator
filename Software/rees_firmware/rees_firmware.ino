@@ -40,7 +40,7 @@ Encoder encoder(
   SWpin
 );
 Display display = Display();
-MechVentilation ventilation;
+MechVentilation ventilation = MechVentilation(1.0, 1.0, 1.0, 1.0, 1.0);
 
 // =========================================================================
 // SETUP
