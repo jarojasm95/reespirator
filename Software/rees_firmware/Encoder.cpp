@@ -8,15 +8,22 @@ const int8_t KNOBDIR[] = {
      0,  1, -1,  0
 };
 
+
+void BEEP() {
+  digitalWrite(11, HIGH); // test zumbador
+  delay(100);
+  digitalWrite(11, LOW);
+}
+
 Encoder::Encoder(int pin1, int pin2, int pulsador) {
   _pin1 = pin1;
   _pin2 = pin2;
   _pulsador = pulsador;
 
   // Setup the input pins and turn on pullup resistor
-  pinMode(pin1, INPUT_PULLUP);
-  pinMode(pin2, INPUT_PULLUP);
-  pinMode(pulsador, INPUT_PULLUP);
+  pinMode(pin1, INPUT);
+  pinMode(pin2, INPUT);
+  pinMode(pulsador, INPUT);
 
   // when not started in motion, the current state of the encoder should be 3
   _oldState = 3;
@@ -33,7 +40,6 @@ long Encoder::getPosition() {
   return _positionExt;
 }
 
-// unused
 int Encoder::getDirection() {
 
   int ret = 0;
@@ -159,18 +165,13 @@ bool Encoder::readButton() {
  * @return int giro antihorario: 8, giro horario: 2
  */
 int Encoder::read() {
-  static int _pos = 0;
   tick();
-  int _newPos = getPosition();
-
   // Giramos antihorario (Subimos en el menu)
-  if (_pos > _newPos) {
-    _pos = _newPos;
+  if (getDirection() == -1) {
     return 8;
   }
   // Giramos horario (Subimos en el menu)
-  else if (_pos < _newPos) {
-    _pos = _newPos;
+  else if (getDirection() == 1) {
     return 2;
   }
   // Pulsamos (Modificamos valor)

@@ -1,12 +1,9 @@
 #include "Display.h"
 #include "Arduino.h"
 
+LiquidCrystal_I2C lcd(I2C_DIR, 20, 4);
+
 Display::Display() {
-#ifdef I2C
-  lcd.begin();
-#else
-  lcd.begin(20, 4);
-#endif
   byte _Flecha[] = {
       B00000,
       B00100,
@@ -26,6 +23,7 @@ Display::Display() {
       B01110,
       B01110,
       B00000};
+  lcd.begin();
   //Creamos el icono flecha
   lcd.createChar(0, _Flecha);
   lcd.createChar(1, _Cruz);

@@ -40,7 +40,15 @@ Encoder encoder(
   SWpin
 );
 Display display = Display();
-MechVentilation ventilation;
+MechVentilation ventilation = MechVentilation(1.0, 1.0, 1.0, 1.0, 1.0);
+
+void writer(String message, int line) {
+  Serial.println(message);
+}
+
+void writer(String message) {
+  Serial.println(message);
+}
 
 // =========================================================================
 // SETUP
@@ -80,37 +88,42 @@ void setup()
   display.clear();
   delay(100);
 
-
   // INTERACCIÓN: ESTATURA
   // =========================================================================
-  display.writeLine(0, "Introduce estatura");
+  writer("Introduce estatura", 0);
+  writer("Altura: " + String(estatura) + " cm", 1);
   while(!encoder.readButton()) {
+    int anterior = estatura;
     encoder.updateValue(&estatura);
-    display.writeLine(1, "Altura: " + String(estatura) + " cm");
+    if (anterior != estatura){
+      writer("Altura: " + String(estatura) + " cm", 1);
+    }
   }
-  display.writeLine(0, "Valor guardado");
-  display.writeLine(1, "Altura: " + String(estatura) + " cm");
-  Serial.println("Altura (cm): " + String(estatura));
+  writer("Valor guardado", 0);
+  writer("Altura (cm): " + String(estatura), 1);
   delay(1000);
   display.clear();
 
 
   // INTERACCIÓN: SEXO
   // =========================================================================
-  display.writeLine(0, "Introduce sexo");
+  writer("Introduce sexo", 0);
   while(!encoder.readButton()) {
+    int anterior = sexo;
     encoder.swapValue(&sexo);
-    if (sexo == 0) {
-      display.writeLine(1, "Sexo: varon");
-    } else if (sexo == 1) {
-      display.writeLine(1, "Sexo: mujer");
+    if (anterior != sexo) {
+      if (sexo == 0) {
+        writer("Sexo: varon", 1);
+      } else if (sexo == 1) {
+        writer("Sexo: mujer", 1);
+      }
     }
   }
-  display.writeLine(0, "Sexo seleccionado");
+  writer("Sexo seleccionado", 0);
   if (sexo == 0) {
-    display.writeLine(1, "Sexo: varon");
+    writer("Sexo: varon", 1);
   } else if (sexo == 1) {
-    display.writeLine(1, "Sexo: mujer");
+    writer("Sexo: mujer", 1);
   }
   Serial.println("Sexo (0:V, 1:M): " + String(sexo));
   delay(1000);
