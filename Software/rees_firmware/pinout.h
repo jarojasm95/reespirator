@@ -6,7 +6,7 @@
 #define LCD_ROWS 4
 #define LCD_COLS 20
 
-#define I2C_DIR 0x3F
+#define I2C_DIR 0x27
 
 // Rotary encoder
 #define CLKpin 2
