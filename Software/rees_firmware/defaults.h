@@ -1,7 +1,7 @@
 #ifndef DEFAULTS_H
 #define DEFAULTS_H
 
-#undef I2C // definido = Display i2c, sin definir Display parallel
+#define I2C 1 // definido = Display i2c, sin definir Display parallel
 
 // Valores motor
 #define DEFAULT_PASOS_POR_REVOLUCION 200 // Suponiendo un motor de 200 pasos/rev sin microstepper

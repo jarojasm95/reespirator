@@ -2,11 +2,7 @@
 #include "Arduino.h"
 
 Display::Display() {
-#ifdef I2C
-  lcd.begin();
-#else
-  lcd.begin(20, 4);
-#endif
+  lcd.begin(LCD_COLS, LCD_ROWS);
   byte _Flecha[] = {
       B00000,
       B00100,
