@@ -11,6 +11,8 @@
 /** No trigger. */
 #define LPM_FLUX_TRIGGER_VALUE_NONE     FLT_MAX
 
+MechVentilation::MechVentilation(){}
+
 MechVentilation::MechVentilation(
     float mlTidalVolume,
     float secTimeoutInsufflation,

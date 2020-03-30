@@ -41,8 +41,8 @@ Encoder encoder(
   CLKpin,
   SWpin
 );
-Display display = Display();
-MechVentilation ventilation = MechVentilation(1.0, 1.0, 1.0, 1.0, 1.0);
+Display display;
+MechVentilation ventilation;
 
 // =========================================================================
 // SETUP
@@ -57,6 +57,7 @@ void setup()
   // Puerto serie
   Serial.begin(9600);
   Serial.println("Inicio");
+  display = Display(true);
 
   // Display de inicio
   display.writeLine(0, "REESPIRATOR");

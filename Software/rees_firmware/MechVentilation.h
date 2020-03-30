@@ -28,6 +28,8 @@ enum State {
  */
 class MechVentilation {
 public:
+    MechVentilation(
+    );
 	/**
 	 * Constructor (no trigger).
 	 *

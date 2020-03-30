@@ -10,11 +10,12 @@ class Display
 {
 public:
   Display();
+  Display(bool init);
   void writeLine(int line, String message = "", int offsetLeft = 0);
   void clear();
 
 private:
-  LiquidCrystal_I2C lcd = LiquidCrystal_I2C(I2C_DIR, LCD_COLS, LCD_ROWS);
+  LiquidCrystal_I2C *lcd;
 };
 
 #endif // PANTALLA_H
