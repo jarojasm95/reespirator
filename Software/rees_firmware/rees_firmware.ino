@@ -9,7 +9,8 @@
 #include "Display.h"
 #include "Encoder.h"
 #include "MechVentilation.h"
-#include "src/AccelStepper/AccelStepper.h"
+#include <MultiStepper.h>
+#include <AccelStepper.h>
 
 // =========================================================================
 // VARIABLES
