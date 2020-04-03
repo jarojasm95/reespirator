@@ -1,12 +1,15 @@
 #include "Display.h"
 #include "Arduino.h"
-
+#include "src/LiquidCrystal_I2C/LiquidCrystal_I2C.h"
+//LiquidCrystal_I2C lcd(0x27,20,4);
 Display::Display() {
-#ifdef I2C
+//#ifdef I2C
+  LiquidCrystal_I2C lcd(0x27,20,4);
   lcd.begin();
-#else
-  lcd.begin(20, 4);
-#endif
+  lcd.setBacklight(HIGH);
+//#else
+  //lcd.begin(20, 4);
+
   byte _Flecha[] = {
       B00000,
       B00100,
@@ -29,6 +32,7 @@ Display::Display() {
   //Creamos el icono flecha
   lcd.createChar(0, _Flecha);
   lcd.createChar(1, _Cruz);
+  //#endif
 }
 
 /**
@@ -39,15 +43,19 @@ Display::Display() {
  * @param offsetLeft posicion inicial desde la que se empieza a escribit
  */
 void Display::writeLine(int line, String message, int offsetLeft) {
+  //#ifdef I2C
   lcd.setCursor(0, line);
   lcd.print("");
   lcd.setCursor(offsetLeft, line);
   lcd.print(message);
+  //#endif
 }
 
 /**
  * @brief Deja la Display en blanco, sin caracteres.
  */
 void Display::clear() {
+  //#ifdef I2C
   lcd.clear();
+  //#endif
 }

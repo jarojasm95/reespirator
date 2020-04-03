@@ -86,11 +86,9 @@ void MechVentilation::update(void) {
         switch(_currentState) {
             case State_WaitTrigger : {
                 /* @todo Uncomment on trigger condition */
-#if 0
                 _setState(State_StartInsufflation);
                 /* Step directly into next case */
                 bContinue = true;
-#endif
             }
             break;
 
@@ -166,7 +164,7 @@ void MechVentilation::update(void) {
             }
             break;
         }
-    } while (bContinue = true);
+    } while (bContinue == true);
 
 }
 

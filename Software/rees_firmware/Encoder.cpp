@@ -144,7 +144,7 @@ bool Encoder::readButton() {
       _flag = true;
     }
     while (digitalRead(_pulsador) == 0) {
-      if (millis() - _tiempo > 300) {
+      if (millis() - _tiempo > 30) {  
         _flag = false;
         return true;
       }
