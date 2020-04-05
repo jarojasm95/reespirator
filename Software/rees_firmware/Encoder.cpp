@@ -33,7 +33,6 @@ long Encoder::getPosition() {
   return _positionExt;
 }
 
-// unused
 int Encoder::getDirection() {
 
   int ret = 0;
@@ -84,51 +83,26 @@ void Encoder::tick(void) {
  *
  * @param valor valor a actualizar
  */
-void Encoder::swapValue(int* valor) {
+bool Encoder::swapValue(int* valor) {
   // Giramos horario o antihorario
-  if (read() == 2 || read() == 8) {
+  int val = read();
+  if (val == 1 || val == -1) {
     if (*valor == 0) {
       *valor = 1;
     } else if (*valor == 1) {
       *valor = 0;
     }
   }
+  return val != 0;
 }
 
-void Encoder::swapValue(bool* valor) {
+bool Encoder::swapValue(bool* valor) {
   // Giramos horario o antihorario
-  if (read() == 2 || read() == 8) {
+  int val = read();
+  if (val == 1 || val == -1) {
     *valor = !(*valor);
   }
-}
-
-/**
- * @brief Altera un valor entero un incremento delta.
- *
- * Incrementa (antihorario) o decrementa (horario) un
- * valor dado, un delta determinado.
- *
- * @param valor valor a actualizar
- * @param delta incremento, por defecto: 1
- */
-void Encoder::updateValue(int* valor, int delta) {
-  // Giramos horario (Subimos en el menu)
-  if (read() == 2) {
-    *valor = *valor - delta;
-  // Giramos antihorario (Subimos en el menu)
-  } else if (read() == 8) {
-    *valor = *valor + delta;
-  }
-}
-
-void Encoder::updateValue(float* valor, float delta) {
-  // Giramos horario (Subimos en el menu)
-  if (read() == 2) {
-    *valor = *valor - delta;
-  // Giramos antihorario (Subimos en el menu)
-  } else if (read() == 8) {
-    *valor = *valor + delta;
-  }
+  return val != 0;
 }
 
 /**
@@ -144,7 +118,7 @@ bool Encoder::readButton() {
       _flag = true;
     }
     while (digitalRead(_pulsador) == 0) {
-      if (millis() - _tiempo > 30) {  
+      if (millis() - _tiempo > 30) {
         _flag = false;
         return true;
       }
@@ -156,26 +130,44 @@ bool Encoder::readButton() {
 /**
  * @brief Lee el giro del knob del encoder.
  *
- * @return int giro antihorario: 8, giro horario: 2
+ * @return int giro antihorario: -1, giro horario: 1
  */
 int Encoder::read() {
-  static int _pos = 0;
   tick();
-  int _newPos = getPosition();
+  int dir = getDirection();
 
   // Giramos antihorario (Subimos en el menu)
-  if (_pos > _newPos) {
-    _pos = _newPos;
-    return 8;
+  if (dir > 0) {
+    return 1;
   }
   // Giramos horario (Subimos en el menu)
-  else if (_pos < _newPos) {
-    _pos = _newPos;
-    return 2;
+  else if (dir < 0) {
+    return -1;
   }
   // Pulsamos (Modificamos valor)
   if (readButton()) {
-    return 5;
+    return 0;
   }
-  return 0;
+  return 2;
+}
+
+
+bool Encoder::adjustValue(int* valor, int delta = 1) {
+  int val = read();
+  if (val == 1) {
+    *valor = *valor + delta;
+  } else if (val == -1) {
+    *valor = *valor - delta;
+  }
+  return val != 0;
+}
+
+bool Encoder::adjustValue(float* valor, float delta = 1.0) {
+  int val = read();
+  if (val == 1) {
+    *valor = *valor + delta;
+  } else if (val == -1) {
+    *valor = *valor - delta;
+  }
+  return val != 0;
 }

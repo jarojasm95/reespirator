@@ -4,9 +4,11 @@
 #undef I2C // definido = Display i2c, sin definir Display parallel
 
 // Valores motor
-#define DEFAULT_PASOS_POR_REVOLUCION 200 // Suponiendo un motor de 200 pasos/rev sin microstepper
+#define DEFAULT_PASOS_POR_REVOLUCION 3200 // Motor de 200 pasos/rev (sin microstepper)
+//ANGULO POR PASO = STEP = 1.8
 #define DEFAULT_ACELERACION 6000
 #define DEFAULT_MICROSTEPPER 16
+//MICRO ANGULO POR PASO = MICROSTEP = 1.8/16 = 0.1125 = 3200 PASOS POR REV
 
 // Valores por defecto
 #define DEFAULT_ESTATURA 170 // cm
@@ -15,7 +17,7 @@
 #define DEFAULT_MAX_VOLUMEN_TIDAL 800
 #define DEFAULT_MIN_VOLUMEN_TIDAL 240
 #define DEFAULT_FLUJO_TRIGGER 3
-#define DEFAULT_RPM 15
+#define DEFAULT_RPM 24
 #define DEFAULT_MAX_RPM 24
 #define DEFAULT_MIN_RPM 14
 #define DEFAULT_POR_INSPIRATORIO 60

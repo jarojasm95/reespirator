@@ -9,14 +9,14 @@ public:
   Encoder(int pin1, int pin2, int pulsador);
   int read();
   bool readButton();
-  void swapValue(int* valor);
-  void swapValue(bool* valor);
-  void updateValue(int* valor, int delta = 1);
-  void updateValue(float* valor, float delta = 1.0);
+  bool swapValue(int* valor);
+  bool swapValue(bool* valor);
   long getPosition();
   int getDirection(); //0 = No rotation, 1 = Clockwise, -1 = Counter Clockwise
   void setPosition(long newPosition);
   void tick(void);
+  bool adjustValue(int* valor, int delta = 1);
+  bool adjustValue(float* valor, float delta = 1.0);
 
 private:
   int _pin1, _pin2, _pulsador;
