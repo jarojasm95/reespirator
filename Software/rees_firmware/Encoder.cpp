@@ -111,14 +111,15 @@ bool Encoder::swapValue(bool* valor) {
  * @return true cuando se pulsa
  * @return false si no se ha pulsado
  */
-bool Encoder::readButton() {
+bool Encoder::readButton(int waitFor = 30) {
   if (digitalRead(_pulsador) != 1) {
     if (!_flag) {
       _tiempo = millis();
       _flag = true;
     }
+
     while (digitalRead(_pulsador) == 0) {
-      if (millis() - _tiempo > 30) {
+      if (millis() - _tiempo > waitFor) {
         _flag = false;
         return true;
       }

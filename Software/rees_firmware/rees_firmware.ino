@@ -9,6 +9,7 @@
 #include "Encoder.h"
 #include "src/FlexyStepper/FlexyStepper.h"
 #include "src/LiquidCrystal_I2C/LiquidCrystal_I2C.h"
+#include "src/AutoPID/AutoPID.h"
 #include "Arduino.h"
 #include "Wire.h"
 
@@ -21,7 +22,6 @@ int porcentajeInspiratorio = DEFAULT_POR_INSPIRATORIO;
 int estatura               = DEFAULT_ESTATURA;
 int sexo                   = DEFAULT_SEXO;
 int microStepper           = DEFAULT_MICROSTEPPER;
-int aceleracion            = DEFAULT_ACELERACION * microStepper;
 int pasosPorRevolucion     = DEFAULT_PASOS_POR_REVOLUCION;
 float flujoTrigger         = DEFAULT_FLUJO_TRIGGER;
 
@@ -29,7 +29,9 @@ bool tieneTrigger;
 bool errorFC = false;
 int volumenTidal;
 int stage = 0;
-float speedIns, speedEsp, tCiclo, tIns, tEsp;
+float speedIns = 0.1;
+float speedEsp = 0.1;
+float tCiclo, tIns, tEsp;
 uint32_t time = 0;
 float cycleTime = 0.0;
 
@@ -41,7 +43,9 @@ Encoder encoder(
   CLKpin,
   SWpin
 );
-LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27,20,4);
+AutoPID *pidI = new AutoPID(0, 100, 80, 2, 5);
+AutoPID *pidE = new AutoPID(0, 100, 80, 2, 5);
+LiquidCrystal_I2C lcd = LiquidCrystal_I2C(I2C_DIR, LCD_COLS, LCD_ROWS);
 // =========================================================================
 // SETUP
 // =========================================================================
@@ -87,7 +91,7 @@ void setup()
   // FC efecto hall
   pinMode(ENDSTOPpin, INPUT); // el sensor de efecto hall da un 1 cuando detecta
   stepper.connectToPins(PULpin, DIRpin);
-  stepper.setStepsPerRevolution(3200);
+  stepper.setStepsPerRevolution(pasosPorRevolucion);
   stepper.setSpeedInRevolutionsPerSecond(1.0);
   stepper.setAccelerationInRevolutionsPerSecondPerSecond(1.0);
   printTo(2, "Setup");
@@ -121,7 +125,7 @@ void setup()
   }
   delay(1000);
 
-
+  /*
   // ESTIMACIÓN: VOLUMEN TIDAL
   // =========================================================================
   printTo(0, "Vol. tidal estimado:", true);
@@ -141,7 +145,6 @@ void setup()
   delay(1000);
 
 
-  /*
   // INTERACCIÓN: TRIGGER SI/NO
   // =========================================================================
   //display.writeLine(0, "Trigger?");    - Línea obsoleta
@@ -185,7 +188,6 @@ void setup()
   while(encoder.adjustValue(&rpm)) {
     lcd.setCursor(0,1);
     rpm = constrain(rpm, DEFAULT_MIN_RPM, DEFAULT_MAX_RPM);
-    //display.writeLine(1, String(rpm) + " rpm");    - Línea obsoleta
     printToLcd(1, String(rpm) + " rpm");
   }
   printTo(0, "Valor guardado", true);
@@ -195,22 +197,22 @@ void setup()
 
   // CÁLCULO: CONSTANTES DE TIEMPO INSPIRACION/ESPIRACION
   // =========================================================================
-  calcularCicloInspiratorio(&speedIns, &speedEsp, &tIns, &tEsp,
-                            &tCiclo, pasosPorRevolucion, microStepper,
-                            porcentajeInspiratorio, rpm);
+  calcularCicloInspiratorio(&tIns, &tEsp, &tCiclo, porcentajeInspiratorio, rpm);
 
   // INFORMACIÓN: PARÁMETROS
   // =========================================================================
-  printTo(0, "Tins: " + String(tIns) + " s", true);
+  printTo(0, "Tins (seg): " + String(tIns) + " s", true);
   printTo(1, "Tesp (seg): " + String(tEsp) + " s");
-  printTo(2, "Vol: " + String(volumenTidal) + " ml");
+  //printTo(2, "Vol: " + String(volumenTidal) + " ml");
+  printTo(2, "Tciclo (seg): " + String(tCiclo) + " s");
   printTo(3, "Frec: " + String(rpm) + " rpm");
-  Serial.println("Tiempo del ciclo (seg):" + String(tCiclo));
   Serial.println("Tiempo inspiratorio (seg):" + String(tIns));
   Serial.println("Tiempo espiratorio (seg):" + String(tEsp));
   Serial.println("Velocidad inspiratoria calculada:" + String(speedIns));
   Serial.println("Velocidad espiratoria calculada:" + String(speedEsp));
-  delay(5000);
+  while(!encoder.readButton()){
+    delay(500);
+  };
 
 
 // INTERACCIÓN: ARRANQUE
@@ -218,7 +220,7 @@ void setup()
   printTo(0, "Pulsa para iniciar", true);
   printTo(1, "Esperando...");
   while(!encoder.readButton()){
-    delay(1000);
+    delay(500);
   };
   printTo(0, "Iniciando...", true);
   digitalWrite(ENpin, LOW);
@@ -237,6 +239,7 @@ bool hallSensorActivated() {
 void setMotorPosition(float speed, float revs = 0.5) {
   stepper.setCurrentPositionInRevolutions(0.0);
   stepper.setSpeedInRevolutionsPerSecond(speed);
+  stepper.setAccelerationInRevolutionsPerSecondPerSecond(speed);
   stepper.setTargetPositionRelativeInRevolutions(revs * -1.0);
 }
 
@@ -247,6 +250,8 @@ void resetToHome() {
     setMotorPosition(0.1, 0.01);
     stepper.processMovement();
   }
+  setMotorPosition(0.1, 0.52);
+  stepper.processMovement();
 }
 
 void resetToNonHome() {
@@ -258,44 +263,37 @@ void resetToNonHome() {
 
 void reset() {
   errorFC = false;
-  // stage = 0; //cambiamos de velocidad
   disableBuzzer();
-  //resetToNonHome();
-  //resetToHome();
+  resetToNonHome();
+  resetToHome();
   lcd.clear();
   sensorStatus = true;
   stage = 0;
   time = millis();
   cycleTime = tIns;
-  speedIns = 0.10;
-  speedEsp = 0.10;
 }
 
+int selection = 0;
+int cycles = 0;
+
 void loop() {
-  printToLcd(0, "Operando...");
+  printToLcd(0, String(rpm) + " rpm / " + String(porcentajeInspiratorio) + "%");
 
-  // TODO: chequear trigger
-  // si hay trigger, esperar al flujo umbral para actuar, si no, actuar en cada bucle
-  // Si está en inspiración: controlar con PID el volumen tidal (el que se insufla)
-  // Si está en espiración: soltar balón (mover leva hacia arriba sin controlar) y esperar
-
-  // recalcular valores por si han cambiado en el menu
-  // TODO: sustituir por nueva funcion: calcularConstantes();
+  if(selection >= 2) {
+    selection = 0;
+  }
   bool switched = false;
   while(!stepper.motionComplete()){
     stepper.processMovement();
     if (!switched) {
-      /*
       bool sensor = hallSensorActivated();
       if (!switched && sensorStatus != sensor) {
         sensorStatus = sensor;
         switched = !switched;
       }
-      */
-      sensorStatus = !sensorStatus;
-      switched = !switched;
     }
   }
+  calcularCicloInspiratorio(&tIns, &tEsp, &tCiclo, porcentajeInspiratorio, rpm);
   if (errorFC) {
     // no se ha llegado al final suena el BUZZ y ordena dar 3 pasos en busca del FC
     if (encoder.readButton()) {
@@ -303,34 +301,37 @@ void loop() {
       reset();
     }
   } else if (stage == 0) { // Primera mitad del ciclo
-    printToLcd(1, "Ciclo 1");
-    printToLcd(2, "Tiempo: " + String(cycleTime) + "s/" + String(tIns) + "s");
-    printToLcd(3, "Velocidad: " + String(speedIns));
-    setMotorPosition(speedIns);
-    float diff = cycleTime - tIns;
-    if (diff != 0.0) {
-      speedIns = speedIns + (speedIns * diff / tIns);
+    printToLcd(1, "T Esp: " + String(cycleTime) + "s/" + String(tEsp) + "s");
+    printToLcd(3, "Respiraciones: " + String(cycles));
+    setMotorPosition(speedIns, .25);
+    //pidE->run(cycleTime, tEsp, &speedEsp);
+    float diff = cycleTime - tEsp;
+    if (diff > 0.05 || diff < -0.05) {
+      speedEsp = speedEsp + (speedEsp * diff / tEsp);
     }
+    Serial.println("Velocidad inspiratoria calculada:" + String(speedEsp));
     stage = 1;
-  } else if (stage == 1 && !sensorStatus) {
+    cycles = cycles + 1;
+  } else if (stage == 1) {
     cycleTime = (millis() - time) / 1000.0;
     time = millis();
     stage = 2;
   } else if (stage == 2) { // Segunda mitad del ciclo
     //se ha llegado al final de carrera en el momento que toca pensar que esta defino como pullup
-    printToLcd(1, "Ciclo 2");
-    printToLcd(2, "Tiempo: " + String(cycleTime) + "s/" + String(tEsp) + "s");
-    printToLcd(3, "Velocidad: " + String(speedEsp));
-    setMotorPosition(speedEsp);
-    float diff = cycleTime - tEsp;
-    if (diff != 0.0) {
-      speedEsp = speedEsp + (speedEsp * diff / tEsp);
+    printToLcd(2, "T Ins: " + String(cycleTime) + "s/" + String(tIns) + "s");
+    setMotorPosition(speedEsp, .125);
+    //pidI->run(cycleTime, tIns, &speedIns);
+    float diff = cycleTime - tIns;
+    if (diff > 0.05 || diff < -0.05) {
+      speedIns = speedIns + (speedIns * diff / tIns);
     }
+    Serial.println("Velocidad espiratoria calculada:" + String(speedIns));
     stage = 3;
-  } else if (stage == 3 && sensorStatus) {
+  } else if (stage == 3) {
     cycleTime = (millis() - time) / 1000.0;
     time = millis();
     stage = 0;
+    setMotorPosition(30, 0.625);
   } else {
     // si acabada la segunda parte del movimiento no se ha llegado al SENSOR HALL entonces da un paso y vuelve a hacer la comprovocacion
     errorFC = true;

@@ -8,7 +8,7 @@ class Encoder
 public:
   Encoder(int pin1, int pin2, int pulsador);
   int read();
-  bool readButton();
+  bool readButton(int waitFor = 30);
   bool swapValue(int* valor);
   bool swapValue(bool* valor);
   long getPosition();
